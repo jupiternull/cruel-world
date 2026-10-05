@@ -2,7 +2,9 @@
 
 A keyboard-only, three-hero campaign across three realms. This alpha is for playtesting; balance, performance, and presentation may change.
 
-Click the launch screen, then click the game to focus it. Use arrows/WASD and Enter/Space in menus. Move with A/D or Left/Right; Space jumps; W/S or Up/Down climbs; F attacks; E uses the class ability; Shift dashes; Q rolls. Escape/P pauses; losing focus also pauses. Sound and volume are in Settings. Use the host fullscreen button in the browser.
+Live browser build: https://jupiternull.github.io/cruel-world/
+
+Click the launch screen, then click the game to focus it. Use arrows/WASD and Enter/Space in menus. Move with A/D or Left/Right; Space jumps; W/S or Up/Down climbs; F attacks; E uses the class ability; Shift or Q uses class-specific defensive mobility. Escape/P pauses; losing focus also pauses. Sound and volume are in Settings. Use the host fullscreen button in the browser.
 
 Browser high scores, selected hero, settings, and furthest region are session-only. Reloading or closing the page loses them; this is not a resumable campaign save. Desktop saves retain their normal behavior. Audio needs a launch click and may be muted by browser policy. Keyboard required; touch controls and mobile play are not supported. First launch downloads the pygbag Python/Pygame runtime from its CDN, so an internet connection is required. Browser performance and audio may differ from desktop. Quit ends the game; reload to launch again.
 

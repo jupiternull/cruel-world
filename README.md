@@ -4,7 +4,9 @@
 
 ![Cruel World title screen](docs/media/title.png)
 
-> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The current campaign is playable on desktop and an HTML5 build is prepared. Restricted itch.io closed-alpha deployment is next; no itch.io release has been published. Camp, crafting, character creation, and expedition systems are planned.
+**[Play the closed alpha in your browser](https://jupiternull.github.io/cruel-world/)** — desktop keyboard required.
+
+> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The current campaign is playable on desktop and through the live GitHub Pages HTML5 build. A restricted itch.io playtest page is still planned. Camp, crafting, character creation, and expedition systems are planned.
 
 ## Playable today
 
@@ -46,6 +48,8 @@ The public source repository does not redistribute the Hero Knight source pack o
 Choose **Begin campaign**, select a hero, and press Enter. Continue right, clear two finite waves per realm (five then six enemies, at most four alive), defeat the solo boss, and enter the glowing door. Complete all three realms to win.
 
 ## Browser build
+
+Live build: **https://jupiternull.github.io/cruel-world/**
 
 Install FFmpeg with libvorbis support, then:
 
@@ -106,7 +110,7 @@ Use GitHub Issues with the **Bug report** or **Playtest feedback** template. Inc
 
 These are development directions, not shipped features or dated promises.
 
-- **Next alpha:** restricted HTML5 deployment, desktop/browser playtesting, balance and readability passes, performance and input-feel fixes.
+- **Next alpha:** restricted itch.io deployment, broader desktop/browser playtesting, balance and readability passes, performance and input-feel fixes.
 - **Character identity:** controlled character creation, expanded class selection, and subclasses with distinct roles and tradeoffs.
 - **Base camp:** a compact roamable hub with NPCs, services, training, crafting, and persistent camp progression.
 - **Expeditions and progression:** prepare at camp, undertake expeditions, master bosses, collect materials, and develop equipment and camp services.
