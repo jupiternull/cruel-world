@@ -56,6 +56,7 @@ class Enemy(Entity):
         if new_state not in self.states or self.state == new_state:
             return
         self.state = new_state
+        self.image = self.states[new_state][0]
         self.current_frames = self.states[new_state]
         self.current_frame_idx = 0
         self.animation_timer = 0
@@ -65,6 +66,7 @@ class Enemy(Entity):
     def take_damage(self, amount):
         if not self.alive:
             return
+        self.attacking = False
         self.health -= amount
         if self.health <= 0:
             self.health = 0
@@ -90,6 +92,11 @@ class Enemy(Entity):
             dx = -self.speed
             self.facing_right = False
 
+        if distance <= self.attack_range - 8:
+            dx = 0
+        if self.on_ground and target_rect.bottom < col.bottom - 40:
+            self.vel_y = -15
+            self.on_ground = False
         if dx != 0:
             if self.state != 'WALK':
                 self.set_state('WALK')
@@ -101,7 +108,7 @@ class Enemy(Entity):
             if self.state == 'WALK':
                 self.set_state('IDLE')
 
-        if distance < self.attack_range and self.attack_timer <= 0:
+        if distance < self.attack_range and abs(col.centery - target_rect.centery) < 35 and self.attack_timer <= 0:
             self.do_attack()
 
     def do_attack(self):
@@ -199,3 +206,43 @@ class YellowSkeleton(Enemy):
                          damage=SKEL_YELLOW_DAMAGE,
                          attack_range=SKEL_YELLOW_ATTACK_RANGE,
                          attack_cooldown=SKEL_YELLOW_ATTACK_COOLDOWN)
+
+
+class BoneWarden(YellowSkeleton):
+    """Milestone boss: armored recovery, long windup and a sweeping strike."""
+    def __init__(self, x, y, frame_dict, wave):
+        super().__init__(x, y, frame_dict)
+        self.health = self.max_health = min(260, 110 + wave * 10)
+        self.damage = 20
+        self.speed = 2
+        self.attack_range = 80
+        self.attack_cooldown = 120
+
+    def set_state(self, new_state):
+        super().set_state(new_state)
+        if new_state in ('ATTACK1', 'ATTACK2'):
+            self.frame_delay = 130
+
+    def take_damage(self, amount):
+        if not self.alive:
+            return
+        self.health = max(0, self.health - amount)
+        if self.health == 0:
+            self.alive = False
+            self.attacking = False
+            self.set_state('DIE')
+
+    def get_attack_hitbox(self):
+        box = super().get_attack_hitbox()
+        if box:
+            if not self.facing_right:
+                box.x -= 35
+            box.width += 35
+        return box
+
+    def draw(self, screen):
+        super().draw(screen)
+        col = self._col_rect()
+        pygame.draw.circle(screen, (255, 190, 65), (col.centerx, col.top - 8), 5)
+        if self.attacking and self.current_frame_idx < len(self.current_frames) // 3:
+            pygame.draw.circle(screen, (255, 90, 60), (col.centerx, col.top - 22), 6, 2)

@@ -1,0 +1,9 @@
+MedievalSharp
+Copyright (c) 2011, wmk69 (wmk69@o2.pl)
+Source: Google Fonts
+Downloaded: October 5, 2026
+
+Licensed under the SIL Open Font License, Version 1.1. The complete license is retained at assets/fonts/medievalsharp/OFL.txt.
+
+Imported path:
+assets/fonts/medievalsharp/MedievalSharp-Regular.ttf

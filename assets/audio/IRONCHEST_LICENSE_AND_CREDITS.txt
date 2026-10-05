@@ -1,0 +1,12 @@
+Ironchest's Dungeon Loops
+Creator: Ironchest Games
+Source: https://ironchestgames.itch.io/ironchests-dungeon-music-loops
+Downloaded: October 5, 2026
+
+License: Creative Commons Zero v1.0 Universal (CC0).
+Verified on the original source page on October 5, 2026, under "Asset license".
+License URL: https://creativecommons.org/publicdomain/zero/1.0/
+Attribution is not required. Redistribution and commercial use are permitted.
+
+Included here:
+Ironchest_dungeon001.ogg through Ironchest_dungeon010.ogg, excluding track 009 because it was not present in the creator's OGG download archive.

@@ -1,0 +1,9 @@
+Hero Knight character asset
+Creator: Sven
+Source: https://sventhole.itch.io/hero-knight
+Downloaded: October 5, 2026
+
+The creator permits use in commercial and non-commercial game projects. The asset may not be resold as a standalone asset.
+
+Imported path:
+assets/heroes/hero_knight/

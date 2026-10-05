@@ -40,7 +40,7 @@ class PowerUp:
 
     def update(self):
         self.lifetime -= 1
-        self.bob_offset = math.sin(pygame.time.get_ticks() * self.bob_speed * 0.01) * 5
+        self.bob_offset = math.sin((300 - self.lifetime) * self.bob_speed) * 5
         return self.lifetime > 0 and not self.collected
 
     def draw(self, screen):

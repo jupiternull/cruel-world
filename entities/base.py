@@ -1,5 +1,6 @@
 import pygame
 from config import GAME_CONFIG
+from level import GROUND_ROW
 
 
 class Entity:
@@ -45,24 +46,24 @@ class Entity:
             for tx in range(max(0, left), min(cols, right + 1)):
                 if layout[ty][tx] in GAME_CONFIG['SOLID_TILES']:
                     tile_rect = pygame.Rect(tx * ts, ty * ts, ts, ts)
+                    # Raised platforms are one-way: jump through, land from above.
+                    if ty < GROUND_ROW and (dy <= 0 or self._col_rect().bottom > tile_rect.top):
+                        continue
                     if test_rect.colliderect(tile_rect):
                         return True
         return False
 
     def apply_gravity(self, layout):
-        self.vel_y += GAME_CONFIG['GRAVITY']
-        if not self.check_collision(0, self.vel_y, layout):
-            self.rect.y += self.vel_y
-            self.on_ground = False
-            if self.rect.bottom >= GAME_CONFIG['HEIGHT']:
-                self.rect.bottom = GAME_CONFIG['HEIGHT']
+        self.vel_y = min(16, self.vel_y + GAME_CONFIG['GRAVITY'])
+        step = 1 if self.vel_y > 0 else -1
+        self.on_ground = False
+        for _ in range(abs(int(self.vel_y))):
+            if self.check_collision(0, step, layout):
+                self.on_ground = step > 0
                 self.vel_y = 0
-                self.on_ground = True
-        else:
-            step = 1 if self.vel_y > 0 else -1
-            for _ in range(abs(self.vel_y)):
-                if self.check_collision(0, step, layout):
-                    break
-                self.rect.y += step
+                break
+            self.rect.y += step
+        if self._col_rect().bottom >= GAME_CONFIG['HEIGHT']:
+            self.rect.y -= self._col_rect().bottom - GAME_CONFIG['HEIGHT']
             self.vel_y = 0
             self.on_ground = True

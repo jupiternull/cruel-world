@@ -1,0 +1,11 @@
+Martial Hero ranger source
+Creator: LuizMelo
+Source: https://luizmelo.itch.io/martial-hero
+Downloaded: October 5, 2026
+
+License: Creative Commons Zero (CC0). Commercial and non-commercial use permitted. Attribution is not required. The original archive License.txt is retained.
+
+Cruel World may use a palette-modified derivative with custom bow/quiver overlays as the Ranger class while preserving this source pack and license record.
+
+Imported path:
+assets/heroes/ranger_source/

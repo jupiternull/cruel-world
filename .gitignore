@@ -30,3 +30,40 @@ desktop.ini
 
 # Logs / Debug
 *.log
+
+# Local development, verification, and capture output
+/artifacts/
+/New Assets/
+/capture-frames/
+/tmp/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+/save.json
+/save.json.tmp
+/saves/
+*.prof
+
+# Licensed local-only character source and generated derivatives
+/assets/heroes/hero_knight/
+/assets/heroes/knight/
+
+# Imported source-pack material not used by the runtime
+/assets/heroes/huntress/
+/assets/heroes/warrior/
+/assets/enemies/luizmelo/Monsters_Creatures_Fantasy/All Characters.png
+/assets/environments/legacy_fantasy/**/Character/
+/assets/environments/legacy_fantasy/**/Mob/
+/assets/environments/legacy_fantasy/**/HUD/
+/assets/environments/legacy_fantasy/**/*.aseprite
+/assets/environments/legacy_fantasy/**/Assets/Hive.png
+/assets/environments/legacy_fantasy/**/Assets/Tree-Assets.png
+/assets/environments/legacy_fantasy/**/Trees/Background.png
+/assets/environments/legacy_fantasy/**/Trees/Golden-Tree.png
+/assets/environments/legacy_fantasy/**/Trees/Green-Tree.png
+/assets/environments/legacy_fantasy/**/Trees/Red-Tree.png
+/assets/environments/legacy_fantasy/**/Trees/Yellow-Tree.png
+/assets/environments/moon_graveyard/Final/Grass_background_*.png
+/assets/environments/moon_graveyard/Final/Salt.png
+/assets/environments/moon_graveyard/Final/Social/
+/assets/environments/moon_graveyard/Final/brush.png

@@ -49,6 +49,7 @@ class Knight(Entity):
         self.hit_flash = 0
 
         # Combat
+        self.hit_targets = set()
         self.attacking = False
         self.attack_hitbox = None
         self.current_damage = 0
@@ -69,6 +70,9 @@ class Knight(Entity):
         if new_state not in self.states or self.state == new_state:
             return
         self.state = new_state
+        self.image = self.states[new_state][0]
+        if new_state in ('ATTACK', 'ATTACK2', 'ATTACK_COMBO', 'CROUCH_ATTACK'):
+            self.hit_targets.clear()
         self.current_frames = self.states[new_state]
         self.current_frame_idx = 0
         self.animation_timer = 0
@@ -78,6 +82,10 @@ class Knight(Entity):
     def take_damage(self, damage):
         if self.invulnerable > 0 or not self.alive:
             return
+        self.attacking = False
+        self.attack_hitbox = None
+        self.combo_buffer = False
+        self.combo_timer = 0
         self.health -= damage
         self.invulnerable = 60
         self.hit_flash = 10
@@ -213,7 +221,7 @@ class Knight(Entity):
             return
 
         # Crouch attack
-        if self.crouching and self.on_ground:
+        if self.crouching and self.on_ground and not self.state_locked:
             self.set_state('CROUCH_ATTACK')
             self.attacking = True
             self.current_damage = ATTACK1_DAMAGE
@@ -223,6 +231,9 @@ class Knight(Entity):
         # Combo chaining — buffer press during active attack
         if self.state_locked and self.state in ('ATTACK', 'ATTACK2'):
             self.combo_buffer = True
+            return
+
+        if self.state_locked:
             return
 
         # Combo window — chain next hit after previous attack ended
@@ -288,6 +299,9 @@ class Knight(Entity):
                 self.rect.x = new_x
 
     def _update_attack_hitbox(self):
+        if not self.attacking or self.current_frame_idx < 1:
+            self.attack_hitbox = None
+            return
         hitbox_width = 45
         hitbox_height = 40
         col = self._col_rect()
@@ -318,6 +332,8 @@ class Knight(Entity):
             # Check combo buffer
             if self.combo_buffer and state in ('ATTACK', 'ATTACK2'):
                 self.combo_buffer = False
+                self.combo_timer = COMBO_WINDOW
+                self.set_state('IDLE')
                 self.attack()
                 return
             # Open combo window for chaining
@@ -371,6 +387,9 @@ class Knight(Entity):
             self.invulnerable -= 1
         if self.hit_flash > 0:
             self.hit_flash -= 1
+
+        if self.attacking:
+            self._update_attack_hitbox()
 
         self.animation_timer += dt
         if self.animation_timer >= self.frame_delay:

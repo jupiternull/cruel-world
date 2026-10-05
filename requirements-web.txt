@@ -1,0 +1,2 @@
+# Build tooling only; pygbag supplies pygame-ce in the browser runtime.
+pygbag==0.9.3

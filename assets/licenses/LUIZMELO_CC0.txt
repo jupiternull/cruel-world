@@ -1,0 +1,18 @@
+LuizMelo CC0 character and creature assets
+Downloaded: October 5, 2026
+
+Sources:
+- Medieval Warrior Pack: https://luizmelo.itch.io/medieval-warrior-pack
+- Huntress: https://luizmelo.itch.io/huntress
+- Wizard Pack: https://luizmelo.itch.io/wizard-pack
+- Monsters Creatures Fantasy: https://luizmelo.itch.io/monsters-creatures-fantasy
+
+License: Creative Commons Zero (CC0).
+Commercial and non-commercial use permitted. Attribution is not required.
+The Huntress archive includes its original License.txt confirming CC0.
+
+Imported paths:
+- assets/heroes/warrior/
+- assets/heroes/huntress/
+- assets/heroes/wizard/
+- assets/enemies/luizmelo/

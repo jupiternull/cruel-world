@@ -104,3 +104,76 @@ def load_all_assets():
         'dungeon_tiles': dungeon_tiles,
         'torch_frames': torch_frames,
     }
+
+
+KNIGHT_SOURCE_ROOT = 'heroes/hero_knight/Hero Knight/Sprites/HeroKnight'
+KNIGHT_ROOT = 'heroes/knight'
+KNIGHT_ANIMATIONS = {'Idle': ('Idle', 8), 'Run': ('Run', 10), 'Attack1': ('Attack1', 6),
+                     'Attack2': ('Attack2', 6), 'Attack3': ('Attack3', 8), 'Jump': ('Jump', 3),
+                     'Fall': ('Fall', 4), 'Hit': ('Hurt', 3), 'Death': ('DeathNoBlood', 10),
+                     'Roll': ('Roll', 9), 'Block': ('Block', 5), 'BlockIdle': ('BlockIdle', 8),
+                     'WallSlide': ('WallSlide', 5), 'LedgeGrab': ('LedgeGrab', 5)}
+HERO_MANIFEST = {
+    'warrior': (KNIGHT_ROOT, 100, 55, 2, {k: v[1] for k, v in KNIGHT_ANIMATIONS.items()}),
+    'ranger': ('heroes/ranger', 200, 200, 1.5,
+               {'Idle': 8, 'Run': 8, 'Jump': 2, 'Fall': 2, 'Attack1': 5, 'Attack2': 5,
+                'Attack3': 7, 'Hit': 3, 'Death': 8}),
+    'wizard': ('heroes/wizard/Wizard Pack', 231, 190, 1,
+               {'Idle': 6, 'Run': 8, 'Jump': 2, 'Fall': 2, 'Attack1': 8, 'Attack2': 8, 'Hit': 4, 'Death': 7}),
+}
+MONSTER_MANIFEST = {
+    'Goblin': {'Idle': 4, 'Run': 8, 'Attack': 8, 'Take Hit': 4, 'Death': 4},
+    'Mushroom': {'Idle': 4, 'Run': 8, 'Attack': 8, 'Take Hit': 4, 'Death': 4},
+    'Skeleton': {'Idle': 4, 'Walk': 4, 'Attack': 8, 'Shield': 4, 'Take Hit': 4, 'Death': 4},
+    'Flying eye': {'Flight': 8, 'Attack': 8, 'Take Hit': 4, 'Death': 4},
+}
+FOREST_ROOT = 'environments/legacy_fantasy/Legacy-Fantasy - High Forest 2.3'
+MOON_ROOT = 'environments/moon_graveyard/Final'
+
+
+def image_asset(path):
+    return pygame.image.load(os.path.join(ASSETS_DIR, path)).convert_alpha()
+
+
+def validated_frames(directory, w, h, scale, animations):
+    result = {}
+    for name, count in animations.items():
+        if directory == KNIGHT_ROOT:
+            from pathlib import Path
+            source, expected = KNIGHT_ANIMATIONS[name]
+            files = sorted((Path(ASSETS_DIR) / directory / source).glob('*.png'),
+                           key=lambda p: int(p.stem.rsplit('_', 1)[1]))
+            if len(files) != count or count != expected:
+                raise ValueError(f'{source}: expected {expected} ordered frames')
+            frames = [pygame.image.load(str(p)).convert_alpha() for p in files]
+            if any(f.get_size() != (w, h) for f in frames):
+                raise ValueError(f'{source}: invalid frame dimensions')
+            result[name] = [pygame.transform.scale(f, (w * scale, h * scale)) for f in frames]
+            continue
+        sheet = image_asset(directory + '/' + name + '.png')
+        if sheet.get_size() != (w * count, h):
+            raise ValueError(f'{directory}/{name}: expected {w * count}x{h}, got {sheet.get_size()}')
+        result[name] = [pygame.transform.scale(sheet.subsurface((i * w, 0, w, h)), (w * scale, h * scale)) for i in range(count)]
+    return result
+
+
+def load_campaign_assets():
+    from pathlib import Path
+    missing = any(not (Path(ASSETS_DIR)/KNIGHT_ROOT/folder/f"HeroKnight_{({'BlockIdle': 'Block Idle', 'WallSlide': 'Slide', 'LedgeGrab': 'Grab Ledge'}).get(folder, folder)}_{i}.png").exists()
+                  for folder,count in KNIGHT_ANIMATIONS.values() for i in range(count))
+    if missing:
+        from build_presentation import knight_assets
+        knight_assets()
+    heroes = {name: validated_frames(*spec) for name, spec in HERO_MANIFEST.items()}
+    monsters = {name: validated_frames('enemies/luizmelo/Monsters_Creatures_Fantasy/' + name,
+                                      150, 150, 2, animations) for name, animations in MONSTER_MANIFEST.items()}
+    return {'heroes': heroes, 'monsters': monsters,
+            'forest_bg': image_asset(FOREST_ROOT + '/Background/Background.png'),
+            'forest_trees': image_asset(FOREST_ROOT + '/Trees/Dark-Tree.png').subsurface((0, 0, 112, 384)).copy(),
+            'forest_tiles': image_asset(FOREST_ROOT + '/Assets/Tiles.png'),
+            'interior': image_asset(FOREST_ROOT + '/Assets/Interior-01.png'),
+            'buildings': image_asset(FOREST_ROOT + '/Assets/Buildings.png'),
+            'rocks': image_asset(FOREST_ROOT + '/Assets/Props-Rocks.png'),
+            'moon_bg': image_asset(MOON_ROOT + '/Background_0.png'),
+            'moon_buildings': image_asset(MOON_ROOT + '/Background_1.png'),
+            'moon_tiles': image_asset(MOON_ROOT + '/Tiles.png')}

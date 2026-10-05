@@ -13,13 +13,14 @@ class TileMap:
     def __init__(self, layout, tiles):
         self.layout = layout
         self.tiles = tiles
+        self.floor_tiles = {FLOOR_A: 34, FLOOR_B: 51}
 
     def draw(self, screen):
         ts = GAME_CONFIG['TILE_SIZE']
         for row_idx, row in enumerate(self.layout):
             for col_idx, tile_idx in enumerate(row):
                 if tile_idx != EMPTY and tile_idx < len(self.tiles):
-                    screen.blit(self.tiles[tile_idx], (col_idx * ts, row_idx * ts))
+                    screen.blit(self.tiles[self.floor_tiles.get(tile_idx, tile_idx)], (col_idx * ts, row_idx * ts))
 
 
 class Torch:

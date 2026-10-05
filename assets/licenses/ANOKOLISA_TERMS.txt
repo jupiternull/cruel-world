@@ -1,0 +1,14 @@
+Anokolisa environment assets
+Downloaded: October 5, 2026
+
+Sources:
+- Legacy Fantasy: High Forest: https://anokolisa.itch.io/sidescroller-pixelart-sprites-asset-pack-forest-16x16
+- Hero's Journey: Moon Graveyard: https://anokolisa.itch.io/moon-graveyard
+
+The creator states these packs are free for commercial use and modification. Source or modified source assets may not be sold as standalone asset products without permission. Attribution is optional under the creator's published terms.
+
+Imported paths:
+- assets/environments/legacy_fantasy/
+- assets/environments/moon_graveyard/
+
+Retain this record with distributed project source and do not redistribute the raw packs as standalone downloads.
