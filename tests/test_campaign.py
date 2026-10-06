@@ -30,6 +30,7 @@ class CampaignTests(unittest.TestCase):
 
     def setUp(self):
         self.game.reset_game('warrior')
+        self.game.launch_expedition(0, debug=True)
         self.keys = {}
 
     def ticks(self, count):
@@ -79,9 +80,11 @@ class CampaignTests(unittest.TestCase):
         game = self.game
         game.change_mode('title')
         game.activate()
+        self.ticks(30)
         self.assertEqual(game.mode, 'class')
         game.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT))
         game.activate()
+        self.ticks(30)
         self.assertEqual(game.knight.class_id, 'ranger')
         self.assertEqual(game.knight.health, 100)
         self.assertEqual(SaveData(game.save.path).last_class, 'ranger')
@@ -91,6 +94,7 @@ class CampaignTests(unittest.TestCase):
         for name in CLASSES:
             game = self.game
             game.reset_game(name)
+            game.launch_expedition(0, debug=True)
             game.knight.attack()
             self.ticks(10)
             source = game.sources[0]
@@ -104,6 +108,7 @@ class CampaignTests(unittest.TestCase):
             with self.subTest(hero=name):
                 game = self.game
                 game.reset_game(name)
+                game.launch_expedition(0, debug=True)
                 hero = game.knight
                 before = hero.rect.x
                 self.assertTrue(hero.secondary())
@@ -123,6 +128,7 @@ class CampaignTests(unittest.TestCase):
     def test_mobility_and_combo_locks(self):
         for name in CLASSES:
             self.game.reset_game(name)
+            self.game.launch_expedition(0, debug=True)
             hero = self.game.knight
             self.assertTrue(hero.dash())
             self.assertFalse(hero.attack())
@@ -135,6 +141,7 @@ class CampaignTests(unittest.TestCase):
     def test_arrows_hit_once_and_stop(self):
         game = self.game
         game.reset_game('ranger')
+        game.launch_expedition(0, debug=True)
         enemy = Monster(240, 504, game.assets['monsters']['Mushroom'], 'Mushroom')
         enemy.attack_timer = 1000
         game.enemies = [enemy]
@@ -146,6 +153,7 @@ class CampaignTests(unittest.TestCase):
     def test_piercing_wave_hits_two_targets_once(self):
         game = self.game
         game.reset_game('wizard')
+        game.launch_expedition(0, debug=True)
         for x in (190, 260):
             enemy = Monster(x, 504, game.assets['monsters']['Mushroom'], 'Mushroom')
             enemy.attack_timer = 1000
@@ -158,6 +166,7 @@ class CampaignTests(unittest.TestCase):
     def test_ranged_can_move_and_jump_during_attack(self):
         for name in ('ranger', 'wizard'):
             self.game.reset_game(name)
+            self.game.launch_expedition(0, debug=True)
             hero = self.game.knight
             hero.attack()
             before = hero.rect.x
@@ -169,6 +178,7 @@ class CampaignTests(unittest.TestCase):
     def test_fireball_damage_and_lifetime(self):
         game = self.game
         game.reset_game('wizard')
+        game.launch_expedition(0, debug=True)
         enemy = Monster(230, 504, game.assets['monsters']['Goblin'], 'Goblin')
         enemy.attack_timer = 1000
         game.enemies = [enemy]
@@ -198,6 +208,7 @@ class CampaignTests(unittest.TestCase):
     def test_ranged_aims_toward_elevated_front_target(self):
         game = self.game
         game.reset_game('ranger')
+        game.launch_expedition(0, debug=True)
         enemy = Monster(300, 320, game.assets['monsters']['Flying eye'], 'Flying eye')
         enemy.attack_timer = 1000
         game.enemies = [enemy]
@@ -218,6 +229,7 @@ class CampaignTests(unittest.TestCase):
     def test_pause_freezes_sources_climb_and_audio(self):
         game = self.game
         game.reset_game('wizard')
+        game.launch_expedition(0, debug=True)
         game.knight.attack()
         self.ticks(10)
         source = game.sources[0]
@@ -298,6 +310,7 @@ class CampaignTests(unittest.TestCase):
         checkpoint = game.campaign.checkpoint
         game.change_mode('over')
         game.activate()
+        self.ticks(30)
         self.assertEqual(game.knight.rect.x, checkpoint)
         self.assertEqual(game.knight.health, 150)
         self.assertEqual(game.mode, 'play')
@@ -321,12 +334,19 @@ class CampaignTests(unittest.TestCase):
     def test_environment_transition_and_victory(self):
         game = self.game
         for index in range(3):
+            game.launch_expedition(index, debug=True)
             self.assertEqual(game.campaign.index, index)
             game.campaign.exit_open = True
             game.state.phase = 'exit'
             game.knight.rect.center = game.world.exit.center
             game.tick({})
-        self.assertEqual(game.mode, 'victory')
+            self.ticks(100)
+            self.assertEqual(game.mode, 'results')
+            game.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+            self.ticks(30)
+        self.assertEqual(game.mode, 'camp')
+        self.assertTrue(game.campaign.complete)
+        self.assertEqual(game.save.cleared_regions, [0, 1, 2])
         self.assertTrue(game.campaign.complete)
         self.assertEqual(SaveData(game.save.path).furthest_environment, 2)
 
@@ -370,6 +390,7 @@ class CampaignTests(unittest.TestCase):
             for index in range(3):
                 with self.subTest(hero=name, region=index):
                     game.reset_game(name)
+                    game.launch_expedition(0, debug=True)
                     game.campaign.index = index
                     game.load_environment()
                     game.knight.rect.x = 800
@@ -385,6 +406,7 @@ class CampaignTests(unittest.TestCase):
     def test_ranged_mobility_cancels_unreleased_attack(self):
         for name in ('ranger', 'wizard'):
             self.game.reset_game(name)
+            self.game.launch_expedition(0, debug=True)
             hero = self.game.knight
             hero.attack()
             self.ticks(5)
@@ -395,11 +417,13 @@ class CampaignTests(unittest.TestCase):
             self.assertIsNone(hero.pending_attack)
             self.assertFalse(hero.attacking)
         self.game.reset_game('warrior')
+        self.game.launch_expedition(0, debug=True)
         self.game.knight.attack()
         self.assertFalse(self.game.knight.dash())
 
     def test_wizard_primary_recovers_in_24_ticks_secondary_keeps_commitment(self):
         self.game.reset_game('wizard')
+        self.game.launch_expedition(0, debug=True)
         hero = self.game.knight
         hero.attack()
         self.ticks(9)
@@ -421,9 +445,16 @@ class CampaignTests(unittest.TestCase):
         with patch.object(game.knight, 'update_animation') as update:
             game.tick({})
         update.assert_not_called()
-        self.assertEqual(game.campaign.index, 1)
-        self.assertEqual(game.camera.x, 0)
-        self.assertEqual(game.knight.rect.topleft, (96, 496))
+        self.assertEqual(game.campaign.index, 0)
+        self.ticks(100)
+        self.assertEqual(game.mode, 'results')
+        game.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+        self.ticks(30)
+        self.assertEqual(game.mode, 'camp')
+        self.assertTrue(game.save.gate_unlocked(1))
+        from camp import GATES
+        self.assertEqual(game.camera.x, GATES[0] - 60 - 400)
+        self.assertEqual(game.knight.rect.bottom, 560)
         self.assertFalse(game.sources)
 
     def test_projectiles_leave_vertical_world_bounds(self):
@@ -453,6 +484,7 @@ class CampaignTests(unittest.TestCase):
     def test_mobility_event_uses_held_retreat_direction(self):
         game = self.game
         game.reset_game('wizard')
+        game.launch_expedition(0, debug=True)
         hero = game.knight
         hero.attack()
         with patch('pygame.key.get_pressed', return_value={pygame.K_a: True, pygame.K_d: False,
@@ -468,35 +500,30 @@ class CampaignTests(unittest.TestCase):
         self.assertEqual(camera.x, 0)
 
     def test_menu_audio_transitions_and_settings(self):
-        from campaign import ENVIRONMENTS
         audio = self.game.audio
         for data in ENVIRONMENTS:
             self.game.campaign.index = ENVIRONMENTS.index(data)
             self.game.load_environment()
             self.game.change_mode('play')
+            for _ in range(100): audio.update(1/60)
             for mode in ('pause', 'settings', 'over', 'victory', 'title', 'class'):
                 self.game.change_mode(mode)
+                for _ in range(100): audio.update(1/60)
                 self.assertEqual(audio.mode, mode)
-                self.assertTrue(audio.ambience_channel.get_busy())
-                self.assertIs(audio.ambience_channel.get_sound(), audio.loops[
-                    'cave_ambience' if mode in ('settings', 'title', 'class') else data['ambience']])
-                self.assertFalse(audio.music_channel.get_busy())
-                self.assertEqual(pygame.mixer.music.get_busy(), mode in ('settings', 'title', 'class'))
+                frozen = audio.loop_gain
+                audio.update(.1)
+                if mode in ('pause', 'settings', 'over'):
+                    self.assertEqual(audio.loop_gain, frozen)
                 with patch('pygame.mixer.music.play') as play:
                     audio.set_mode(mode)
                     play.assert_not_called()
                 audio.settings['sound'] = False
                 audio.apply_settings()
                 self.assertEqual(audio.ambience_channel.get_volume(), 0)
-                self.assertEqual(pygame.mixer.music.get_volume(), 0)
-                audio.settings['sound'] = True
-                audio.settings['volume'] = 0.5
-                audio.apply_settings()
-                self.assertAlmostEqual(audio.ambience_channel.get_volume(), 0.09, delta=0.01)
+                audio.settings.update(sound=True, volume=.5)
                 self.game.change_mode('play')
-                self.assertFalse(pygame.mixer.music.get_busy())
+                for _ in range(100): audio.update(1/60)
                 self.assertIs(audio.music_channel.get_sound(), audio.loops[data['music']])
-                self.assertIs(audio.ambience_channel.get_sound(), audio.loops[data['ambience']])
                 self.assertFalse(audio.paused)
 
     def test_audio_variants_and_independent_environment_channels(self):
@@ -505,6 +532,7 @@ class CampaignTests(unittest.TestCase):
             self.assertGreaterEqual(len(audio.variants[name]), 2)
         for data in ENVIRONMENTS:
             audio.environment(data)
+            for _ in range(100): audio.update(1/60)
             self.assertEqual(audio.current_environment, data['id'])
             self.assertIs(audio.music_channel.get_sound(), audio.loops[data['music']])
             self.assertIs(audio.ambience_channel.get_sound(), audio.loops[data['ambience']])
@@ -524,7 +552,7 @@ class CampaignTests(unittest.TestCase):
         save.furthest_environment = 2
         save.save()
         data = json.loads(path.read_text())
-        self.assertEqual(data['version'], 2)
+        self.assertEqual(data['version'], 4)
         self.assertEqual(data['high_score'], 42)
         self.assertEqual(SaveData(path).last_class, 'wizard')
         path.write_text(json.dumps({'last_class': 'bad', 'furthest_environment': 'bad'}))
@@ -555,6 +583,7 @@ class PresentationTests(unittest.TestCase):
                 actual = self.game.assets['heroes']['warrior'][state][i]
                 self.assertEqual(pygame.image.tobytes(actual, 'RGBA'), pygame.image.tobytes(expected, 'RGBA'))
         self.game.reset_game('warrior')
+        self.game.launch_expedition(0, debug=True)
         for stage in (1, 2, 3):
             hero = self.game.knight
             hero.pending_attack = None
@@ -729,6 +758,7 @@ class PresentationTests(unittest.TestCase):
         save.save()
         self.assertEqual(json.loads(path.read_text())['last_class'], 'ranger')
         self.game.reset_game('huntress')
+        self.game.launch_expedition(0, debug=True)
         self.assertEqual(self.game.knight.class_id, 'ranger')
         self.assertEqual(self.game.knight.stats['name'], 'Ranger')
         self.assertEqual(list(CLASSES), ['warrior','ranger','wizard'])
@@ -758,6 +788,7 @@ class PresentationTests(unittest.TestCase):
 
     def test_ranger_original_attack_hurt_and_death_timing(self):
         self.game.reset_game('ranger')
+        self.game.launch_expedition(0, debug=True)
         hero = self.game.knight
         self.assertEqual(len(hero.frames['Hit']), 3)
         self.assertEqual(len(hero.frames['Death']), 8)

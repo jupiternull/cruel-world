@@ -9,7 +9,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent
 MODULES = ('main.py', 'config.py', 'assets.py', 'audio.py', 'camera.py', 'campaign.py',
-           'game_state.py', 'level.py', 'persistence.py', 'projectile.py', 'scenery.py', 'ui.py')
+           'progression.py', 'camp.py', 'camp_interior.py', 'region_features.py', 'game_state.py', 'level.py', 'persistence.py', 'projectile.py', 'scenery.py', 'ui.py')
 
 
 def runtime_files(root=ROOT):
@@ -25,7 +25,7 @@ def runtime_files(root=ROOT):
         files.add(root / 'assets' / FOREST_ROOT / name)
     for name in ('Background_0.png', 'Background_1.png', 'Tiles.png'):
         files.add(root / 'assets' / MOON_ROOT / name)
-    for directory in ('audio', 'fonts', 'licenses', 'ui'):
+    for directory in ('audio', 'fonts', 'licenses', 'ui', 'regions'):
         files.update(p for p in (root / 'assets' / directory).rglob('*')
                      if p.is_file() and p.suffix.lower() in ('.ogg', '.wav', '.ttf', '.txt', '.png', '.md'))
     return sorted(files)

@@ -95,6 +95,9 @@ class Scenery:
                 pygame.draw.rect(screen, (29, 26, 38), (sx - 8, 264, 16, 30))
                 pygame.draw.circle(screen, (88, 60, 39), (sx, 280), 14)
                 pygame.draw.circle(screen, (255, 179, 79), (sx, 280), 6)
+        features = getattr(self.world, 'features', None)
+        if features:
+            features.draw_background(screen, camera)
         screen.blit(self.cache, (-camera.x, 0))
         for point in self.world.data['checkpoints']:
             color = (135, 228, 177) if point <= campaign.checkpoint else (102, 119, 125)

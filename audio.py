@@ -17,7 +17,13 @@ class AudioManager:
         self.current_environment = None
         self.paused = False
         self.mode = 'play'
+        self.camp_morale = False
         self.environment_data = None
+        self.fade = None
+        self.loop_names = (None, None)
+        self.loop_gain = 1.0
+        self.pending_loops = None
+        self.fallback_path = None
         directory = Path(directory or Path(ASSETS_DIR) / 'audio')
         try:
             if not pygame.mixer.get_init():
@@ -44,8 +50,8 @@ class AudioManager:
         for music in (directory / 'music.ogg', directory / 'music' / 'Ironchest_dungeon001.ogg'):
             if music.is_file():
                 try:
-                    pygame.mixer.music.load(str(music))
-                    pygame.mixer.music.play(-1)
+                    self.loops['fallback'] = pygame.mixer.Sound(str(music))
+                    self.fallback_path = music
                     self.music_loaded = True
                     self.fallback_music_loaded = True
                     break
@@ -69,6 +75,15 @@ class AudioManager:
                     self.loops[path.stem] = pygame.mixer.Sound(str(path))
                 except (pygame.error, OSError):
                     pass
+        for name in ('music', 'ambience', 'interior'):
+            for extension in ('.ogg', '.wav'):
+                path = directory / 'camp' / (name + extension)
+                if path.is_file():
+                    try:
+                        self.loops['camp_' + name] = pygame.mixer.Sound(str(path))
+                        break
+                    except (pygame.error, OSError):
+                        continue
         self.apply_settings()
 
     def apply_settings(self):
@@ -81,8 +96,8 @@ class AudioManager:
             for sound in variants:
                 sound.set_volume(volume)
         pygame.mixer.music.set_volume(volume * (0.35 if self.mode != 'play' else 0.6))
-        self.music_channel.set_volume(volume * (0.25 if self.mode != 'play' else 0.55))
-        self.ambience_channel.set_volume(volume * (0.18 if self.mode != 'play' else 0.3))
+        self.music_channel.set_volume(self.loop_gain * volume * (0.14 if self.mode == 'interior' else 0.25 if self.mode != 'play' else 0.55))
+        self.ambience_channel.set_volume((0.9 if self.camp_morale and self.mode == 'camp' else 1) * self.loop_gain * volume * (0.18 if self.mode != 'play' else 0.3))
 
     def play(self, name):
         original_name = name
@@ -102,53 +117,64 @@ class AudioManager:
             if channel:
                 channel.play(self.sounds[name])
 
+    def request_loops(self, names):
+        if names[0] not in self.loops and 'fallback' in self.loops:
+            names = ('fallback', names[1])
+        if names == self.loop_names and self.pending_loops is None:
+            return
+        if names == self.pending_loops:
+            return
+        self.pending_loops = names
+        self.fade = 'out'
+
+    def update(self, dt):
+        if not self.fade or self.paused:
+            return
+        dt = max(0, min(dt, .1))
+        if self.fade == 'out':
+            self.loop_gain = max(0, self.loop_gain - dt / .35)
+            if self.loop_gain == 0:
+                names = self.pending_loops
+                self.pending_loops = None
+                if self.available:
+                    # Replace only changed loops at silence; the shared camp score keeps its phase.
+                    for i, (channel, name) in enumerate(zip((self.music_channel, self.ambience_channel), names)):
+                        if name != self.loop_names[i]:
+                            channel.stop()
+                            if name in self.loops:
+                                channel.play(self.loops[name], loops=-1)
+                self.loop_names = names
+                self.fade = 'in'
+        else:
+            self.loop_gain = min(1, self.loop_gain + dt / .55)
+            if self.loop_gain == 1:
+                self.fade = None
+        self.apply_settings()
+
     def environment(self, data):
         self.environment_data = data
-        if self.mode != 'play':
-            self.set_mode(self.mode, refresh=True)
-            return
-        if not self.available:
-            return
         self.current_environment = data['id']
-        if data['music'] in self.loops:
-            pygame.mixer.music.stop()
-        elif self.fallback_music_loaded:
-            pygame.mixer.music.play(-1)
-            if self.paused:
-                pygame.mixer.music.pause()
-        for channel, name in ((self.music_channel, data['music']), (self.ambience_channel, data['ambience'])):
-            channel.stop()
-            if name in self.loops:
-                channel.play(self.loops[name], loops=-1)
-                self.music_loaded = True
-                if self.paused:
-                    channel.pause()
-        self.apply_settings()
+        if self.mode == 'play':
+            self.request_loops((data['music'], data['ambience']))
 
     def set_mode(self, mode, refresh=False):
         if mode == self.mode and not refresh:
             return
         self.mode = mode
-        self.paused = mode != 'play'
-        if not self.available:
+        if mode in ('pause', 'settings', 'over'):
+            self.pause(True)
             return
-        # Stop transient gameplay cues and replace the two reserved loops atomically.
-        pygame.mixer.stop()
-        pygame.mixer.music.stop()
-        if mode == 'play':
-            if self.environment_data:
-                self.environment(self.environment_data)
-            return
-        front_end = mode in ('title', 'class', 'settings')
-        if front_end and self.fallback_music_loaded:
-            pygame.mixer.music.play(-1)
-        elif front_end and 'graveyard_theme' in self.loops:
-            self.music_channel.play(self.loops['graveyard_theme'], loops=-1)
-        ambience = 'cave_ambience' if front_end else (
-            self.environment_data['ambience'] if self.environment_data else 'cave_ambience')
-        sound = self.loops.get(ambience) or self.loops.get('cave_ambience')
-        if sound:
-            self.ambience_channel.play(sound, loops=-1)
+        self.pause(False)
+        if mode in ('camp', 'interior'):
+            self.current_environment = mode
+            names = ('camp_music', 'camp_interior' if mode == 'interior' else 'camp_ambience')
+        elif mode == 'play' and self.environment_data:
+            names = (self.environment_data['music'], self.environment_data['ambience'])
+        elif mode == 'results':
+            names = ('camp_music', 'camp_interior')
+        else:
+            names = ('graveyard_theme', 'cave_ambience')
+        self.request_loops(names)
         self.apply_settings()
 
     def pause(self, paused):
@@ -156,7 +182,5 @@ class AudioManager:
         if self.available:
             if paused:
                 pygame.mixer.pause()
-                pygame.mixer.music.pause()
             else:
                 pygame.mixer.unpause()
-                pygame.mixer.music.unpause()

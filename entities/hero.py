@@ -1,4 +1,5 @@
 import pygame
+from progression import effect
 from entities.base import Entity
 from projectile import DamageSource
 
@@ -98,8 +99,8 @@ class Hero(Entity):
         self.alive = self.health > 0
         self.set_state(('Hit' if 'Hit' in self.frames else 'Take hit') if self.alive else 'Death', True)
 
-    def heal(self, amount):
-        self.health = min(self.max_health, self.health + amount)
+    def heal(self, amount, upgrade=False):
+        self.health = min(self.max_health, self.health + amount + (effect(self, 'healing') if upgrade and amount > 0 else 0))
 
     def attack(self):
         if not self.alive:
@@ -120,7 +121,7 @@ class Hero(Entity):
     def secondary(self):
         if not self.alive or self.state_locked or self.secondary_cooldown:
             return False
-        self.secondary_cooldown = self.stats['cooldown']
+        self.secondary_cooldown = self.stats['cooldown'] - effect(self, 'recovery')
         if self.class_id == 'warrior':
             self.rushing = True
             self.mobility_timer = 24
@@ -149,6 +150,7 @@ class Hero(Entity):
         if direction:
             self.facing_right = direction > 0
         self.dash_cooldown = 90 if self.class_id != 'wizard' else 150
+        self.dash_cooldown -= effect(self, 'mobility')
         self.roll_cooldown = self.dash_cooldown
         self.mobility_timer = 14
         self.invulnerable = max(self.invulnerable, 18)
@@ -253,7 +255,7 @@ class Hero(Entity):
         elif self.class_id == 'ranger':
             for vy in (-2, 0, 2) if secondary else (0,):
                 self.sources.append(DamageSource((x, y - 4, 30, 8), 24 if secondary else 18,
-                                                'hero', 75, (direction * 12, vy) if secondary else (self.aim.x * 12, self.aim.y * 12),
+                                                'hero', 75 + effect(self, 'reach'), (direction * 12, vy) if secondary else (self.aim.x * 12, self.aim.y * 12),
                                                 'volley' if secondary else 'arrow', self, secondary))
         else:
             self.sources.append(DamageSource((x - 16, y - (65 if secondary else 12), 48 if secondary else 28,

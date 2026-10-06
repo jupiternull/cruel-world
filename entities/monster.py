@@ -58,7 +58,12 @@ class Monster(Entity):
             self.attacking = False
             self.windup = 0
             self.telegraph = None
-            self.set_state('Death')
+            if self.frames.get('Death'):
+                self.set_state('Death')
+            else:
+                # Finish the current frame cycle when no death frames exist.
+                self.current_frame_idx = 0
+                self.animation_timer = 0
         elif not self.boss:
             self.hit_stun = 10
             self.set_state('Take Hit')

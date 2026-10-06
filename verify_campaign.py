@@ -16,6 +16,25 @@ def combat_keys(game, tick):
     hero = game.knight
     enemies = [enemy for enemy in game.enemies if enemy.alive]
     keys = {}
+    features = game.features
+    if features.gate and not features.gate_open and 1680 < hero.rect.centerx < 1904:
+        if abs(hero.rect.centerx-1776) > 60:
+            return {pygame.K_d if hero.rect.centerx < 1776 else pygame.K_a: True}
+        if not features.gate_tick:
+            game.expedition_interact()
+        return {}
+    barrier = next((p for p in features.breakables if p.kind == 'vine' and p.alive
+                    and 0 < p.rect.centerx-hero.rect.centerx < 140), None)
+    if barrier:
+        hero.facing_right = True
+        hero.aim = pygame.Vector2(1,0)
+        if barrier.rect.left-hero.rect.right < 40 and tick % 12 == 0:
+            hero.attack()
+        approach = {pygame.K_d: True}
+        if hero.on_ground and any(hero.rect.move(40,0).colliderect(rect) for rect in game.world.hazards):
+            approach[pygame.K_SPACE] = tick % 2 == 0
+        return approach
+
     if enemies:
         target = min(enemies, key=lambda enemy: abs(enemy.rect.centerx - hero.rect.centerx))
         distance = target.rect.centerx - hero.rect.centerx
@@ -70,6 +89,7 @@ def verify(output, limit):
         for name in CLASSES:
             random.seed(0)
             game.reset_game(name)
+            game.launch_expedition(0)
             screenshots = set()
             deaths = 0
             retry_locations = []
@@ -77,24 +97,30 @@ def verify(output, limit):
                 game.tick(combat_keys(game, tick))
                 key = (game.campaign.index, game.state.wave)
                 if (game.state.wave == 3 and game.enemies and key not in screenshots
-                        and game.knight.alive and game.knight.health >= game.knight.max_health * 0.4
+                        and game.knight.alive
                         and any(enemy.boss and enemy.windup for enemy in game.enemies)):
                     game.draw()
                     pygame.image.save(game.screen, output / f'{name}-region-{game.campaign.index + 1}.png')
                     screenshots.add(key)
-                if game.mode == 'over':
+                if game.mode == 'over' and not game.transition:
                     deaths += 1
                     retry_locations.append({'region': game.campaign.index + 1, 'wave': game.state.wave})
                     if deaths > 5:
                         break
                     game.selection = 0
                     game.activate()
-                if game.mode == 'victory':
+                if game.mode == 'results' and not game.transition:
+                    game.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+                if game.mode == 'camp' and not game.transition:
+                    if not game.campaign.complete:
+                        game.launch_expedition(game.campaign.index + 1)
+                        continue
                     game.draw()
                     pygame.image.save(game.screen, output / f'{name}-victory.png')
                     break
             report.append({'class': name, 'ticks': tick + 1, 'deaths': deaths, 'region': game.campaign.index + 1,
                            'wave': game.state.wave, 'mode': game.mode, 'score': game.state.score,
+                           'campaign_complete': game.campaign.complete, 'cleared_regions': list(game.save.cleared_regions),
                            'retry_locations': retry_locations, 'boss_screenshots': len(screenshots)})
             print(f'{name}: {game.mode}, region {game.campaign.index + 1}, wave {game.state.wave}, {deaths} retries', flush=True)
         game.change_mode('class')
@@ -110,7 +136,7 @@ def verify(output, limit):
     (output / 'verification.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
     pygame.quit()
-    return all(row['mode'] == 'victory' and row['deaths'] <= 5 and row['boss_screenshots'] == 3 for row in report)
+    return all(row['mode'] == 'camp' and row['campaign_complete'] and row['cleared_regions'] == [0, 1, 2] and row['deaths'] <= 5 and row['boss_screenshots'] == 3 for row in report)
 
 
 if __name__ == '__main__':

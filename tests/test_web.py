@@ -19,6 +19,7 @@ class WebTests(unittest.TestCase):
         game.state = Mock(score=0)
         game.save = Mock()
         game.draw = Mock()
+        game.audio = Mock()
         clock = Mock()
         clock.tick.return_value = 16
         with patch.object(sys, 'platform', 'emscripten'), patch('pygame.time.Clock', return_value=clock), \

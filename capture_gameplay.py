@@ -18,6 +18,7 @@ def capture(output=Path('docs/media/gameplay.gif')):
     with tempfile.TemporaryDirectory() as temporary:
         game = Game(Path(temporary) / 'save.json')
         game.reset_game('ranger')
+        game.launch_expedition(0)
         for tick in range(480):
             game.tick(combat_keys(game, tick))
             if tick % 4 == 0:

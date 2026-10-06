@@ -20,6 +20,7 @@ def capture(output=Path('artifacts')):
             shots.append(name)
         for mode in ('title','settings','pause','over','victory'):
             game.reset_game('warrior')
+            game.launch_expedition(0, debug=True)
             if mode == 'over':
                 game.knight.take_damage(game.knight.max_health)
                 for _ in range(90): game.knight.update_animation(1000 / 60)
@@ -33,7 +34,7 @@ def capture(output=Path('artifacts')):
             for realm in range(3):
                 game.reset_game(name)
                 game.campaign.index=realm
-                game.load_environment()
+                game.launch_expedition(game.campaign.index, debug=True)
                 game.knight.rect.x=game.campaign.environment['zones'][0]-80
                 game.camera.update(game.knight.rect)
                 game.state.phase='combat'

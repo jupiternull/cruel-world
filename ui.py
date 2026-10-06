@@ -210,6 +210,6 @@ def draw_ui(screen, fonts, knight, game_state):
         bar(screen,(195,y,54,8),1-timer/total,knight.stats['color'])
     pygame.draw.rect(screen,INK,(0,574,800,26))
     pygame.draw.line(screen,GOLD,(0,574),(800,574))
-    text(screen,fonts['tiny'],knight.stats['hint']+'   |   Esc: pause',(400,587))
+    text(screen,fonts['tiny'],knight.stats['hint'].replace('   Shift', '/interact   Shift')+'   |   Esc: pause',(400,587))
     if game_state.phase=='travel':
-        draw_banner(screen,fonts,'A/D: move   Space: jump   W/S: climb   S+Space: drop',552,'tiny')
+        text(screen,fonts['tiny'],'A/D: move   Space: jump   W/S: climb   S+Space: drop',(400,565),IVORY)

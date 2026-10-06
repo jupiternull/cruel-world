@@ -1,0 +1,26 @@
+Creator: Hypnobius
+Source URL: https://hypnobius.itch.io/grungy-dungeon-props
+Retrieval date: October 6, 2026
+Selected files used: assets/cell_door_frames.png: eight opening 64x96 frames, first row only. assets/statue_frames.png: six 32x96 frames. assets/pot_frames.png: four 32x32 frames. assets/props_tileset_v1.1.png: barred window (0,0,64,32), shackled skeleton (64,0,64,64), cupboard (128,352,64,96). Palette adapted with embedded masonry/ripple accents; nearest-neighbor runtime scale 2x. Runtime: assets/regions/cell.png, statue.png, pot.png, window.png, skeleton.png, cupboard.png.
+Only transformed runtime subsets are included; original archives remain external.
+
+Original supplied terms (verbatim bytes follow):
+ASSET LICENSE - Dungeon Props Asset Pack - Grungy Tileset #3 [32x32]
+Created by Hypnobius
+https://hypnobius.itch.io/
+
+---
+
+You are allowed to:
+- Use these assets for commercial (free or paid) and personal projects
+- Modify tiles to suit your game or project
+- Credit the artist (optional but appreciated)
+
+You are NOT allowed to:
+- Resell or redistribute this asset pack, either modified or in its original form
+- Include these tiles in other downloadable packs
+- Use these assets in NFTs, blockchain games, or AI training datasets
+
+---
+
+This license applies only to the original asset files. Any game or project implementing these assets may be utilized under your own license.

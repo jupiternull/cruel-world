@@ -148,12 +148,14 @@ class LogicTests(unittest.TestCase):
             (directory / 'music.ogg').write_bytes((Path(ASSETS_DIR) / 'audio/music/Ironchest_dungeon001.ogg').read_bytes())
             audio = AudioManager({'sound': True, 'volume': 0.7}, directory)
             audio.environment(ENVIRONMENTS[0])
-            self.assertTrue(pygame.mixer.music.get_busy())
+            for _ in range(100): audio.update(1/60)
+            self.assertEqual(audio.loop_names[0], 'fallback')
             audio.pause(True)
             audio.environment(ENVIRONMENTS[1])
             self.assertFalse(pygame.mixer.music.get_busy())
             audio.pause(False)
-            self.assertTrue(pygame.mixer.music.get_busy())
+            for _ in range(100): audio.update(1/60)
+            self.assertEqual(audio.loop_names[0], 'fallback')
 
     def test_realm_audio_without_fallback_can_change_to_missing_realm(self):
         from campaign import ENVIRONMENTS
@@ -165,6 +167,7 @@ class LogicTests(unittest.TestCase):
             audio = AudioManager({'sound': True, 'volume': 0.7}, root)
             audio.environment(ENVIRONMENTS[0])
             audio.environment(ENVIRONMENTS[1])
+            for _ in range(100): audio.update(1/60)
             self.assertFalse(audio.music_channel.get_busy())
 
     def test_audio_variants_do_not_change_gameplay_random_state(self):
@@ -202,6 +205,7 @@ class GameplayTests(unittest.TestCase):
         self.game.audio.settings = self.game.save.settings
         self.game.audio.apply_settings()
         self.game.reset_game()
+        self.game.launch_expedition(0, debug=True)
         self.keys = {key: False for key in (pygame.K_a, pygame.K_d, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_s, pygame.K_DOWN, pygame.K_SPACE, pygame.K_w)}
 
     def test_buffered_combo_and_damage_interrupt(self):
@@ -264,9 +268,11 @@ class GameplayTests(unittest.TestCase):
         for _ in range(100):
             game.tick(self.keys)
         self.assertEqual(game.mode, 'over')
-        self.assertGreaterEqual(game.save.high_score, 700)
+        self.assertEqual(game.save.high_score, 0)
+        self.assertEqual(game.save.records, {})
         game.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r))
-        self.assertEqual(game.mode, 'play')
+        for _ in range(30): game.tick({})
+        self.assertEqual(game.mode, 'camp')
         self.assertEqual(game.state.score, 0)
         self.assertEqual(game.knight.health, 150)
 
@@ -334,6 +340,12 @@ class GameplayTests(unittest.TestCase):
         boss.take_damage(boss.health)
         game.knight.health = 40
         game.tick(self.keys)
+        self.assertEqual(game.knight.health, 40)
+        self.assertFalse(game.campaign.exit_open)
+        for _ in range(100):
+            game.tick(self.keys)
+            if game.campaign.exit_open:
+                break
         self.assertEqual(game.knight.health, 70)
         self.assertEqual(game.state.score, 3750)
         game.tick(self.keys)
@@ -368,6 +380,12 @@ class GameplayTests(unittest.TestCase):
         game.draw()
         boss.take_damage(boss.health)
         game.tick(self.keys)
+        self.assertEqual(game.state.phase, 'combat')
+        for _ in range(100):
+            game.tick(self.keys)
+            if game.campaign.exit_open:
+                break
+        self.assertTrue(boss.death_anim_done)
         self.assertEqual(game.state.phase, 'exit')
         for mode in ('title', 'pause', 'settings', 'over'):
             game.change_mode(mode)
@@ -379,10 +397,12 @@ class GameplayTests(unittest.TestCase):
         self.assertEqual(game.mode, 'pause')
         game.selection = 1
         game.activate()
+        for _ in range(30): game.tick({})
         self.assertEqual(game.mode, 'settings')
         previous = game.save.settings['sound']
         game.selection = 0
         game.activate()
+        for _ in range(30): game.tick({})
         self.assertEqual(game.save.settings['sound'], not previous)
         game.selection = 1
         game.activate(-1)

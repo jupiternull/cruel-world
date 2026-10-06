@@ -1,0 +1,19 @@
+Creator: GandalfHardcore
+Source URL: https://gandalfhardcore.itch.io/free-pixel-art-sidescroller-asset-pack-32x32-overworld
+Retrieval date: October 6, 2026
+Selected files used: Animated Sprites/GandalfHardcore Animated Water Tiles.png: six 32x32 surface frames at y=64; six 32x128 waterfall frames at y=96. Palette adapted, embedded ripple accents; nearest-neighbor runtime scale 2x. Runtime: assets/regions/water.png, falls.png.
+Only transformed runtime subsets are included; original archives remain external.
+
+Original supplied terms (verbatim bytes follow):
+Thank you for your purchase/download :)
+
+LICENSE: 
+✔️ You are allowed to use the assets for: 
+Commercial and non-commercial video games and projects 
+Modify them as needed and display them on designated websites
+
+❌ However, the following uses are prohibited:
+Reselling, repackaging, or redistributing the assets
+Using them for AI training or NFT projects  (Crypto, Blockchain, web3)
+Incorporating them into "game development tools" or printed materials
+

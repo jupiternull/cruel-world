@@ -4,12 +4,16 @@ import sys
 import random
 import pygame
 
+from progression import reaction, DISCOVERIES, Expedition, Sayings, UPGRADES, MATERIALS, PROVISIONS, apply_loadout
 from config import GAME_CONFIG
 from assets import load_campaign_assets
 from game_state import CampaignState
 from campaign import Campaign, World
+from camp import Camp
+from camp_interior import QuartermasterStorehouse
 from camera import Camera
 from scenery import Scenery
+from region_features import RegionFeatures
 from entities.hero import Hero, CLASSES
 from entities.monster import Monster
 from persistence import SaveData
@@ -27,6 +31,10 @@ class Game:
         self.fonts = init_fonts()
         self.assets = load_campaign_assets()
         self.audio = AudioManager(self.save.settings)
+        self.transition = None
+        self.sayings = Sayings()
+        self.service = None
+        self.expedition = Expedition(self.save.provision)
         self.running = True
         self.selection = 0
         self.settings_return = 'title'
@@ -35,6 +43,9 @@ class Game:
         self.change_mode('title')
 
     def reset_game(self, class_id=None):
+        if not getattr(self, 'transition_action', False):
+            self.transition = None
+        self.service = None
         self.campaign = Campaign()
         self.class_id = class_id or self.save.last_class
         if self.class_id == 'huntress':
@@ -49,12 +60,219 @@ class Game:
         self.selection = 0
         self.accumulator = 0
         self.load_environment()
-        self.audio.set_mode('play')
+        self.enter_camp()
+
+    def enter_camp(self, notice=''):
+        health = self.knight.health
+        self.knight = Hero(380, 496, self.assets['heroes'][self.class_id], self.class_id)
+        if not notice:
+            self.knight.health = health
+        apply_loadout(self.knight, self.save)
+        self.camp_transition = None
+        self.exterior_camp = None
+        self.audio.camp_morale = len(self.save.cleared_regions) == 3
+        self.world = Camp()
+        self.world.notice = notice
+        self.world.notice_timer = 300 if notice else 0
+        self.camera = Camera(self.world.width)
+        self.camera.update(self.knight.rect)
+        self.enemies = []
+        self.sources = []
+        self.particles = []
+        self.powerups = []
+        self.state.game_over = False
+        self.state.phase = 'camp'
+        self.play_mode = 'camp'
+        self.change_mode('camp')
+
+    def transition_camp(self, entering):
+        if self.camp_transition:
+            return
+        self.world.dialogue = None
+        self.camp_transition = {'entering': entering, 'tick': 0, 'old': self.screen.copy()}
+        hero = self.knight
+        hero.pending_attack = None
+        hero.attacking = False
+        hero.attack_hitbox = None
+        hero.mobility_timer = 0
+        hero.rushing = False
+        hero.combo_buffer = False
+        hero.combo_timer = 0
+        hero.climbing = None
+        hero.vel_y = 0
+        hero.sources.clear()
+        hero.events.clear()
+        hero.set_state('Idle', True)
+        self.sources = []
+        self.particles = []
+        self.powerups = []
+        self.enemies = []
+
+    def tick_camp_transition(self):
+        transition = self.camp_transition
+        transition['tick'] += 1
+        if transition['tick'] == 12:
+            if transition['entering']:
+                self.exterior_camp = self.world
+                self.exterior_position = self.knight.rect.topleft
+                self.exterior_camera = self.camera.x
+                self.world = QuartermasterStorehouse()
+                self.knight.rect.midbottom = (90, 560)
+                self.camera = Camera(self.world.width)
+                self.camera.update(self.knight.rect)
+                self.play_mode = 'interior'
+            else:
+                self.world = self.exterior_camp
+                self.knight.rect.topleft = self.exterior_position
+                self.knight.rect.bottom = 560
+                self.camera = Camera(self.world.width)
+                self.camera.x = self.exterior_camera
+                self.play_mode = 'camp'
+            self.change_mode(self.play_mode)
+        if transition['tick'] >= 24:
+            self.camp_transition = None
+
+    def depart(self, index):
+        if self.save.gate_unlocked(index):
+            self.begin_transition(lambda: self.launch_expedition(index), self.campaign_name(index), True)
+
+    def campaign_name(self, index):
+        from campaign import ENVIRONMENTS
+        return ENVIRONMENTS[index]['name']
+
+    def begin_transition(self, action, title='', interstitial=False):
+        if self.transition:
+            return
+        self.transition = {'tick': 0, 'old': self.screen.copy(), 'action': action,
+                           'title': title, 'saying': self.sayings.next() if interstitial else '',
+                           'duration': 100 if interstitial else 30}
+        self.accumulator = 0
+
+    def tick_transition(self):
+        t = self.transition
+        t['tick'] += 1
+        midpoint = t['duration'] // 2
+        if t.get('suspended'):
+            t['tick'] -= 1
+            return
+        if t['tick'] == midpoint:
+            self.transition_action = True
+            t['action']()
+            self.transition_action = False
+        if t['tick'] >= t['duration']:
+            self.transition = None
+
+    def open_service(self, name):
+        self.service = name
+        self.service_page = 0
+        self.world.dialogue = None
+
+    def service_lines(self):
+        if self.service == 'forge':
+            lines = ['BLACKSMITH - one equipped fitting; materials are permanent unlocks.']
+            for i, (name, _, _, description) in enumerate(UPGRADES[self.class_id]):
+                status = 'EQUIPPED' if self.save.equipped.get(self.class_id) == i else 'PURCHASED' if i in self.save.purchased[self.class_id] else 'UNLOCKED' if i in self.save.cleared_regions else 'LOCKED'
+                lines += [f'{i+1}: {name} [{status}]', description + ' Needs ' + MATERIALS[i]]
+            return lines + reaction(1, self.save, self.class_id)[:1] + ['1/2/3: forge & equip (free)   0: remove fitting   Esc: close']
+        if self.service == 'supplies':
+            return ['QUARTERMASTER - exactly one provision'] + reaction(0, self.save, self.class_id)[:1] + [ '1: Field Dressing - automatic 25 HP heal below 25%, once.', '2: Warding Salt - environmental damage reduced by 25%.', '3: Hunters Charm - optional discovery score +10%.', 'Selected: ' + self.save.provision, 'Retry retains consumed dressing and active provisions.', '1/2/3: select   Esc: close']
+        from campaign import ENVIRONMENTS
+        i = self.service_page
+        row = self.save.records.get(str(i), {})
+        lines = reaction(6, self.save, self.class_id)[:1] + ['CHRONICLER - Left/Right: region', ENVIRONMENTS[i]['name'], 'Boss: ' + ('CLEARED / ' + MATERIALS[i] if i in self.save.cleared_regions else 'Unchallenged / material unknown')]
+        known = row.get('discoveries', [])
+        lines += [f'Discoveries {len(set(known) & set(DISCOVERIES[i]))}/{len(DISCOVERIES[i])}: ' + ', '.join(name if name in known else '???' for name in DISCOVERIES[i])]
+        for c in CLASSES:
+            lines += [f'{CLASSES[c]["name"]}: best {row.get("best", {}).get(c, 0)} / completions {row.get("completions", {}).get(c, 0)}']
+        lines += ['Provision departures: ' + ', '.join(f'{p}: {row.get("provisions", {}).get(p, 0)}' for p in PROVISIONS), 'Esc: close']
+        return lines
+
+    def finish_expedition(self):
+        if self.mode == 'results':
+            return
+        index = self.campaign.index
+        first = self.save.complete_expedition(index, self.class_id, self.state.score, self.features.claimed & set(DISCOVERIES[index]), self.expedition)
+        if first is None:
+            self.results = [self.campaign.environment['boss_name'] + ' DEFEATED',
+                            'Completion not saved', self.save.error,
+                            'No material or unlock granted; records unchanged',
+                            f'Score {self.state.score}', self.expedition.result,
+                            'Enter: return to camp']
+            self.change_mode('results')
+            return
+        self.campaign.complete = index == 2
+        self.results = [self.campaign.environment['boss_name'] + ' DEFEATED',
+                        'THE CAMP ENDURES' if self.campaign.complete else 'EXPEDITION COMPLETE',
+                        ('First clear: ' + MATERIALS[index]) if first else 'Replay: unique material already held',
+                        f'Score {self.state.score} | Discoveries {len(self.features.claimed & set(DISCOVERIES[index]))}/{len(DISCOVERIES[index])}',
+                        self.expedition.result,
+                        ('Unlocked: ' + UPGRADES[self.class_id][index][0] + ' + other hero fittings') if first else 'Replay recorded: class best and completed expedition',
+                        'Next gate available' if first and index < 2 else 'All cleared routes remain replayable',
+                        'Enter: return to camp']
+        self.change_mode('results')
+
+    def return_results(self):
+        from camp import GATES
+        self.enter_camp('The watch welcomes you home.')
+        self.knight.rect.midbottom = (GATES[self.campaign.index] - 60, 560)
+        self.camera.update(self.knight.rect)
+
+    def launch_expedition(self, index, debug=False):
+        if not debug and not self.save.gate_unlocked(index):
+            return False
+        health = self.knight.health
+        self.knight = Hero(96, 496, self.assets['heroes'][self.class_id], self.class_id)
+        self.knight.health = health
+        apply_loadout(self.knight, self.save)
+        self.expedition = Expedition(self.save.provision)
+        self.state.score = 0
+        self.state.completed = 0
+        self.campaign.index = index
+        self.campaign.checkpoint = 96
+        self.campaign.exit_open = False
+        self.campaign.complete = False
+        self.play_mode = 'play'
+        self.change_mode('play')
+        self.load_environment()
+        return True
+
+    def tick_camp(self, keys):
+        if self.camp_transition:
+            self.tick_camp_transition()
+            return
+        camp = self.world
+        camp.ticks += 1
+        if isinstance(camp, Camp):
+            camp.notice_timer = max(0, camp.notice_timer - 1)
+        if camp.dialogue:
+            return
+        hero = self.knight
+        hero.handle_input(keys, camp)
+        camp.gravity(hero)
+        self.camera.update(hero.rect)
+        hero.aim = pygame.Vector2(1 if hero.facing_right else -1, 0)
+        hero.update_animation(1000 / 60)
+        for sound in hero.events:
+            self.audio.play(sound)
+        hero.events.clear()
+        self.sources.extend(hero.sources)
+        hero.sources.clear()
+        for source in self.sources:
+            if source.kind == 'rush':
+                source.rect.center = hero.rect.center
+                source.position = list(source.rect.topleft)
+            source.update(camp)
+            if isinstance(camp, Camp) and source.rect.colliderect(camp.dummy) and 'dummy' not in source.hit_targets:
+                source.hit_targets.add('dummy')
+                camp.hits += 1
+                self.audio.play('sword_hit')
+        self.sources = [s for s in self.sources if s.alive]
 
     def load_environment(self):
         self.world = World(self.campaign.environment)
         self.camera = Camera(self.world.width)
         self.scenery = Scenery(self.world, self.assets)
+        self.features = RegionFeatures(self.world, self.assets)
         self.enemies = []
         self.sources = []
         self.particles = []
@@ -95,8 +313,12 @@ class Game:
         self.mode = mode
         self.selection = 0
         self.accumulator = 0
-        self.state.paused = mode != 'play'
+        self.state.paused = mode not in ('play', 'camp', 'interior')
         self.audio.set_mode(mode)
+
+    def enter_class_selection(self):
+        self.change_mode('class')
+        self.selection = list(CLASSES).index(self.save.last_class)
 
     def activate(self, direction=1):
         choice = self.selection
@@ -116,17 +338,20 @@ class Game:
             self.save.save()
             return
         if self.mode == 'class':
-            self.reset_game(self.options()[choice])
+            chosen = self.options()[choice]
+            self.begin_transition(lambda: self.reset_game(chosen))
             return
         action = self.options()[choice]
         if action in ('Begin campaign', 'Restart run'):
-            self.save.record(self.state.score)
-            self.change_mode('class')
-            self.selection = list(CLASSES).index(self.save.last_class)
+            self.begin_transition(self.enter_class_selection)
         elif action == 'Retry checkpoint':
-            self.save.record(self.state.score)
+            if not getattr(self, 'transition_action', False):
+                self.begin_transition(self.activate)
+                return
+            self.features.retry(self.campaign.checkpoint)
             self.state.score = max(0, self.state.score - 250)
             self.knight = Hero(self.campaign.checkpoint, 496, self.assets['heroes'][self.class_id], self.class_id)
+            apply_loadout(self.knight, self.save)
             self.enemies = []
             self.sources = []
             self.particles = []
@@ -137,29 +362,73 @@ class Game:
             self.state.phase = 'exit' if self.campaign.exit_open else 'travel'
             self.change_mode('play')
         elif action == 'Resume':
-            self.change_mode('play')
+            self.change_mode(self.play_mode)
         elif action == 'Settings':
             self.settings_return = self.mode
             self.change_mode('settings')
         elif action == 'Title screen':
-            self.save.record(self.state.score)
-            self.change_mode('title')
+            self.service = None
+            self.begin_transition(lambda: self.change_mode('title'))
         elif action == 'Quit':
             self.running = False
 
     def handle_event(self, event):
         if event.type == pygame.QUIT:
             self.running = False
-        elif event.type == pygame.WINDOWFOCUSLOST and self.mode == 'play':
+        elif event.type == pygame.WINDOWFOCUSLOST and self.transition:
+            self.transition['suspended'] = True
+            self.audio.pause(True)
+        elif event.type == pygame.WINDOWFOCUSGAINED and self.transition:
+            self.transition['suspended'] = False
+            self.audio.pause(False)
+        elif event.type == pygame.WINDOWFOCUSLOST and self.mode in ('play', 'camp', 'interior'):
             self.change_mode('pause')
         elif event.type == pygame.KEYDOWN:
             key = event.key
-            if self.mode == 'play':
+            if self.transition:
+                return
+            if self.mode == 'results':
+                if key == pygame.K_RETURN:
+                    self.begin_transition(self.return_results)
+                return
+            if self.service:
+                if key == pygame.K_ESCAPE:
+                    self.service = None
+                elif self.service == 'journal' and key in (pygame.K_LEFT, pygame.K_RIGHT):
+                    self.service_page = (self.service_page + (1 if key == pygame.K_RIGHT else -1)) % 3
+                elif key in (pygame.K_1, pygame.K_2, pygame.K_3):
+                    i = key - pygame.K_1
+                    if self.service == 'forge':
+                        self.save.purchase(self.class_id, i)
+                        apply_loadout(self.knight, self.save)
+                    elif self.service == 'supplies':
+                        self.save.provision = PROVISIONS[i]
+                        self.save.save()
+                elif key == pygame.K_0 and self.service == 'forge':
+                    self.save.equipped.pop(self.class_id, None)
+                    self.save.save()
+                    apply_loadout(self.knight, self.save)
+                return
+            if getattr(self, 'camp_transition', None):
+                return
+            if self.mode in ('camp', 'interior'):
+                if key == pygame.K_ESCAPE and self.world.dialogue:
+                    self.world.dialogue = None
+                elif key in (pygame.K_ESCAPE, pygame.K_p):
+                    self.change_mode('pause')
+                elif key in (pygame.K_e, pygame.K_RETURN):
+                    self.world.interact(self)
+                elif not self.world.dialogue and self.mode == 'camp':
+                    actions = {pygame.K_f: self.knight.attack, pygame.K_r: self.knight.secondary,
+                               pygame.K_LSHIFT: self.knight.dash, pygame.K_RSHIFT: self.knight.dash, pygame.K_q: self.knight.roll}
+                    if key in actions:
+                        actions[key]()
+            elif self.mode == 'play':
                 if key in (pygame.K_ESCAPE, pygame.K_p):
                     self.change_mode('pause')
                 elif self.knight.alive:
                     actions = {pygame.K_f: self.knight.attack, pygame.K_LSHIFT: self.knight.dash,
-                               pygame.K_RSHIFT: self.knight.dash, pygame.K_q: self.knight.roll, pygame.K_e: self.knight.secondary}
+                               pygame.K_RSHIFT: self.knight.dash, pygame.K_q: self.knight.roll, pygame.K_e: self.expedition_interact}
                     if key in (pygame.K_LSHIFT, pygame.K_RSHIFT, pygame.K_q):
                         keys = pygame.key.get_pressed()
                         direction = int(keys[pygame.K_d] or keys[pygame.K_RIGHT]) - int(keys[pygame.K_a] or keys[pygame.K_LEFT])
@@ -171,11 +440,11 @@ class Game:
                 if self.mode == 'settings':
                     self.change_mode(self.settings_return)
                 elif self.mode == 'pause':
-                    self.change_mode('play')
+                    self.change_mode(self.play_mode)
                 elif self.mode in ('over', 'class', 'victory'):
-                    self.change_mode('title')
+                    self.begin_transition(lambda: self.change_mode('title'))
             elif key == pygame.K_r and self.mode == 'over':
-                self.reset_game()
+                self.begin_transition(self.reset_game)
             elif key in (pygame.K_UP, pygame.K_w):
                 self.selection = (self.selection - 1) % len(self.options())
             elif key in (pygame.K_DOWN, pygame.K_s):
@@ -186,6 +455,11 @@ class Game:
                 if key in (pygame.K_RETURN, pygame.K_SPACE) or self.mode == 'settings':
                     self.activate(-1 if key == pygame.K_LEFT else 1)
 
+    def expedition_interact(self):
+        if not self.features.interact(self):
+            return self.knight.secondary()
+        return True
+
     def spawn(self, boss=False):
         data = self.campaign.environment
         center = data['zones'][self.state.wave - 1]
@@ -194,6 +468,7 @@ class Game:
         x = max(32, min(self.world.width - 100, x))
         y = 320 if species == 'Flying eye' else 476 if boss else 504
         self.enemies.append(Monster(x, y, self.assets['monsters'][species], species, boss, self.campaign.index))
+        self.enemies[-1].reward_key = (self.state.wave, self.state.spawned)
         self.audio.play('boss' if boss else 'wave')
 
     def burst(self, x, y, color):
@@ -201,17 +476,31 @@ class Game:
             self.particles.append(Particle(x, y, color, random.uniform(-3, 3), random.uniform(-5, -1)))
 
     def tick(self, keys):
+        self.audio.update(1 / 60)
+        if self.transition:
+            self.tick_transition()
+            return
+        if self.service:
+            return
+        if self.mode in ('camp', 'interior'):
+            self.tick_camp(keys)
+            return
         if self.mode != 'play':
             return
         hero = self.knight
+        self.expedition.update(hero)
+        self.features.update(self)
         if hero.alive:
             if self.state.phase == 'travel' and hero.rect.centerx >= self.campaign.environment['zones'][self.state.wave - 1] - 300:
                 self.state.phase = 'ready'
                 self.state.transition_timer = 90
-            event = self.state.update_wave(sum(e.alive for e in self.enemies))
+            event = self.state.update_wave(sum(e.alive or (e.boss and not e.death_anim_done) for e in self.enemies))
             if event in ('spawn', 'boss'):
                 self.spawn(event == 'boss')
             elif event == 'clear':
+                if self.state.wave in self.expedition.wave_claims:
+                    self.state.score = max(0, self.state.score - 250 * self.state.wave)
+                self.expedition.wave_claims.add(self.state.wave)
                 hero.heal(30 if self.state.boss_wave else 15)
                 self.audio.play('wave')
                 if self.state.boss_wave:
@@ -236,21 +525,14 @@ class Game:
             if self.campaign.update_checkpoint(hero.rect.centerx):
                 self.audio.play('chest_open')
             for hazard in self.world.hazards:
-                if hero.rect.colliderect(hazard):
-                    hero.take_damage(16)
+                if not hero.invulnerable and hero.rect.colliderect(hazard):
+                    hero.take_damage(self.expedition.hazard_damage(16))
             # Retreat is allowed, but combat cannot be skipped by crossing the next zone.
             if self.state.phase in ('ready', 'combat', 'clear'):
                 limit = self.campaign.environment['zones'][self.state.wave - 1] + 340
                 hero.rect.right = min(hero.rect.right, limit)
             if self.campaign.exit_open and hero.rect.colliderect(self.world.exit):
-                self.audio.play('door_open')
-                hero.heal(40)
-                if self.campaign.advance():
-                    self.load_environment()
-                else:
-                    self.state.phase = 'victory'
-                    self.save.record(self.state.score)
-                    self.change_mode('victory')
+                self.begin_transition(self.finish_expedition, 'The road falls quiet', True)
                 return
         direction = 1 if hero.facing_right else -1
         hero.aim = pygame.Vector2(direction, 0)
@@ -279,6 +561,7 @@ class Game:
                 source.rect.center = hero.rect.center
                 source.position = list(source.rect.topleft)
             source.update(self.world)
+            self.features.hit(source)
             targets = self.enemies if source.team == 'hero' else [hero]
             for target in targets:
                 before = target.health
@@ -290,6 +573,10 @@ class Game:
         for enemy in self.enemies:
             if not enemy.alive and not enemy.rewarded:
                 enemy.rewarded = True
+                claim = getattr(enemy, 'reward_key', (self.state.wave, enemy.rect.x))
+                if claim in self.expedition.kill_claims:
+                    continue
+                self.expedition.kill_claims.add(claim)
                 self.state.add_score((1000 if enemy.boss else 100) * self.state.wave)
                 self.audio.play('kill')
                 if enemy.boss or random.random() < GAME_CONFIG['POWERUP_SPAWN_CHANCE']:
@@ -301,7 +588,7 @@ class Game:
             if pickup.update():
                 if hero.alive and pickup.get_rect().colliderect(hero.rect):
                     if pickup.type == 'health':
-                        hero.heal(30)
+                        hero.heal(30, upgrade=True)
                     else:
                         self.state.add_score(500)
                     self.audio.play('pickup' if pickup.type == 'health' else 'score')
@@ -312,12 +599,15 @@ class Game:
         self.camera.update(hero.rect)
         if not hero.alive and hero.current_frame_idx == len(hero.current_frames) - 1:
             self.state.game_over = True
-            self.save.record(self.state.score)
             self.change_mode('over')
             self.audio.play('game_over')
 
     def draw(self):
-        self.scenery.draw(self.screen, self.camera, self.campaign)
+        if isinstance(self.world, (Camp, QuartermasterStorehouse)):
+            self.world.draw(self.screen, self.fonts, self)
+        else:
+            self.scenery.draw(self.screen, self.camera, self.campaign)
+            self.features.draw_objects(self.screen, self.camera)
         if self.state.phase in ('ready', 'combat', 'clear'):
             gate_x = self.campaign.environment['zones'][self.state.wave - 1] + 340 - self.camera.x
             if 0 <= gate_x < 800:
@@ -335,7 +625,12 @@ class Game:
             for enemy in self.enemies:
                 enemy.draw(self.screen, self.camera)
             self.knight.draw(self.screen, self.camera)
+        if isinstance(self.world, (Camp, QuartermasterStorehouse)):
+            self.world.draw_foreground(self.screen, self)
+        if not isinstance(self.world, (Camp, QuartermasterStorehouse)):
+            self.features.draw_foreground(self.screen, self.camera)
         if self.mode == 'play':
+            self.features.draw_overlay(self)
             draw_ui(self.screen, self.fonts, self.knight, self.state)
             draw_banner(self.screen, self.fonts, self.campaign.environment['name'], 20, 'small')
             boss = next((e for e in self.enemies if e.boss and e.alive), None)
@@ -346,9 +641,15 @@ class Game:
                 text = {'travel': 'Follow the path to the next battle', 'exit': 'Boss defeated - reach the glowing exit',
                         'clear': 'Wave cleared - recover and press onward', 'ready': 'Enemies approach - prepare!'}
                 draw_banner(self.screen, self.fonts, text.get(self.state.phase, ''), 150, 'small')
+        if isinstance(self.world, (Camp, QuartermasterStorehouse)) and self.mode in ('camp', 'interior'):
+            self.world.draw_overlay(self.screen, self.fonts, self)
+        if self.mode in ('camp', 'interior'):
+            draw_banner(self.screen, self.fonts, f'HP {self.knight.health}/{self.knight.max_health}  |  Score {self.state.score}', 575, 'small')
         if self.mode == 'class':
             draw_class_selection(self.screen, self.fonts, self.assets['heroes'], self.selection)
-        elif self.mode != 'play':
+        elif self.mode == 'results':
+            Camp.panel(self.world, self.screen, self.fonts, self.results, (30, 140, 740, 300))
+        elif self.mode not in ('play', 'camp', 'interior'):
             titles = {'title': 'CRUEL WORLD', 'pause': 'PAUSED', 'over': 'YOU HAVE FALLEN', 'settings': 'SETTINGS', 'victory': 'THE WORLD ENDURES'}
             subtitle = f'Best {self.save.high_score}  |  Score {self.state.score}  |  Region {self.campaign.index + 1}/3'
             if self.mode == 'title':
@@ -356,6 +657,39 @@ class Game:
             draw_menu(self.screen, self.fonts, titles[self.mode], subtitle, self.options(), self.selection)
         if self.save.error:
             draw_banner(self.screen, self.fonts, self.save.error, 135, 'small')
+        if getattr(self, 'camp_transition', None):
+            tick = self.camp_transition['tick']
+            old = self.camp_transition['old'].copy()
+            old.set_alpha(255 if tick <= 12 else max(0, (24-tick) * 255 // 12))
+            self.screen.blit(old, (0, 0))
+        if self.mode == 'play':
+            draw_banner(self.screen, self.fonts, self.expedition.provision + ' [' + self.expedition.status + ']', 575, 'small')
+        if self.service:
+            Camp.panel(self.world, self.screen, self.fonts, self.service_lines(), (30, 130, 740, 320))
+        if self.transition:
+            t = self.transition
+            midpoint = t['duration'] // 2
+            if t['saying']:
+                panel = pygame.Surface((800, 600))
+                panel.fill((20, 24, 31))
+                # A native-pixel gate seal and traveling ember give the fixed loading beat motion.
+                pygame.draw.rect(panel, (91, 83, 69), (366, 122, 68, 78), 4)
+                for x in (380, 398, 416):
+                    pygame.draw.rect(panel, (129, 116, 84), (x, 142, 4, 58))
+                pygame.draw.rect(panel, (47, 45, 43), (190, 423, 420, 6))
+                pygame.draw.rect(panel, (180, 151, 94), (190, 423, 420*t['tick']//t['duration'], 6))
+                pygame.draw.rect(panel, (229, 190, 113), (190+420*t['tick']//t['duration'], 421, 4, 10))
+                Camp.panel(self.world, panel, self.fonts, [t['title'], '', t['saying']], (45, 235, 710, 150))
+                if t['tick'] < midpoint:
+                    self.screen.blit(t['old'], (0, 0))
+                    panel.set_alpha(min(255, t['tick'] * 255 // 24))
+                else:
+                    panel.set_alpha(min(255, (t['duration'] - t['tick']) * 255 // 24))
+                self.screen.blit(panel, (0, 0))
+            else:
+                old = t['old'].copy()
+                old.set_alpha(max(0, 255 - max(0, t['tick'] - midpoint) * 255 // midpoint))
+                self.screen.blit(old, (0, 0))
         pygame.display.flip()
 
     def run(self, frames=None):
@@ -370,15 +704,16 @@ class Game:
                 self.handle_event(event)
             if not self.running:
                 break
-            if self.mode == 'play':
+            if self.mode in ('play', 'camp', 'interior') or getattr(self, 'transition', None):
                 self.accumulator += elapsed
-                while self.accumulator >= 1000 / 60 and self.mode == 'play':
+                while self.accumulator >= 1000 / 60 and (self.mode in ('play', 'camp', 'interior') or getattr(self, 'transition', None)):
                     self.accumulator -= 1000 / 60
                     self.tick(pygame.key.get_pressed())
+            if self.mode not in ('play', 'camp', 'interior') and not getattr(self, 'transition', None):
+                self.audio.update(elapsed / 1000)
             self.draw()
             count += 1
             await asyncio.sleep(0)
-        self.save.record(self.state.score)
         self.save.save()
         if getattr(self, 'screenshot', None):
             pygame.image.save(self.screen, self.screenshot)
@@ -389,6 +724,8 @@ async def async_main():
     parser = argparse.ArgumentParser(description='Cruel World side-scrolling campaign')
     parser.add_argument('--class', dest='class_id', choices=list(CLASSES) + ['huntress'], help='Start a campaign directly with this class')
     parser.add_argument('--environment', type=int, choices=(1, 2, 3), default=1, help='Debug starting region')
+    parser.add_argument('--storehouse', action='store_true', help='Start inside the Quartermaster storehouse with --class')
+    parser.add_argument('--camp', action='store_true', help='Start directly in camp with --class')
     parser.add_argument('--screenshot', help='Save the final frame as a PNG')
     parser.add_argument('--frames', type=int, help='Exit after this many frames for smoke testing')
     args = parser.parse_args([] if sys.platform == 'emscripten' else None)
@@ -399,8 +736,14 @@ async def async_main():
         parser.exit(1, f'Could not start Cruel World: {error}\n')
     if args.class_id:
         game.reset_game(args.class_id)
-        game.campaign.index = args.environment - 1
-        game.load_environment()
+        if args.storehouse:
+            game.knight.rect.midbottom = (182, 560)
+            game.camera.update(game.knight.rect)
+            game.transition_camp(True)
+            for _ in range(24):
+                game.tick({})
+        elif not args.camp:
+            game.launch_expedition(args.environment - 1, debug=True)
     game.screenshot = args.screenshot
     await game.run_async(args.frames)
 
