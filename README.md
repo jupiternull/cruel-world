@@ -1,16 +1,18 @@
 # Cruel World
 
-**A playable pixel-art dark-fantasy action alpha:** three heroes, three side-scrolling realms, and three bosses in a complete keyboard-driven campaign.
+**[Play the current browser alpha](https://jupiternull.github.io/cruel-world/)** — desktop keyboard required.
+
+A pixel-art dark-fantasy action alpha with Knight, Archer, and Wizard, three authored side-scrolling realms and bosses, animated camp services, and progression-aware adventurer dialogue. This release is an authored pilot; the procedural open world described below is planned.
 
 ![Cruel World title screen](docs/media/title.png)
 
-**[Play the current browser alpha](https://jupiternull.github.io/cruel-world/)** — desktop keyboard required. Includes the castle refuge, progression, provisions, aftermath, and expanded regions.
+> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The current build includes the castle refuge, expedition gates, expanded regions, persistent Blacksmith fittings, provisions, aftermath, and expedition records. Character creation and an itch.io playtest release remain deferred; itch.io is not a live game target.
 
-> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The repository and GitHub Pages build include camp, expedition gates, expanded regions, persistent Blacksmith fittings, provisions, aftermath, and expedition records. A restricted itch.io playtest page and character creation remain deferred.
+## Current Features
 
-## Current source build features
-
-- Knight, Ranger, and Wizard with distinct attacks, abilities, and defensive movement.
+- Knight, Archer, and Wizard using local Zerie Pack 01 full assets, with distinct attacks, abilities, and defensive movement.
+- Realm factions: Verdant Ruins — Orc/Armored Orc; Sunken Keep — Slime/Werebear; Moon Graveyard — Skeleton/Greatsword Skeleton/Armored Skeleton. Existing bosses and mechanics remain.
+- Animated Zerie humanoid camp services, guards, adventurers, and storehouse Quartermaster/workers. Mara Reed (forest/orcs), Brann Hollow (cave/depths), and Vey Ash (graveyard/undead) offer progression-aware quest hooks with locked/available/cleared dialogue states; no formal quest tracker yet.
 - A roamable 2200 px castle refuge with distinct service buildings and a central gatehouse with seven useful camp services, safe attack practice, and three progression-gated expeditions.
 - Three expanded authored realms (3840 / 4032 / 4224 px), each with three subareas, signature environment mechanics, optional discoveries, breakable props, ambient life, checkpoints, finite waves, and telegraphed bosses.
 - Directional armor, ranged targeting, hit-once projectiles, pickups, scoring, and checkpoint retries.
@@ -19,7 +21,7 @@
 
 ## Gameplay and screenshots
 
-![Continuous Ranger movement and combat preview](docs/media/gameplay.gif)
+![Continuous Archer movement and combat preview](docs/media/gameplay.gif)
 
 Captured from sequential game-rendered frames at 60 simulation ticks per second, sampled for a 640×480 GIF. The preview runs forward then reverses the same sequence to loop smoothly; reverse playback is an editing effect.
 
@@ -29,11 +31,13 @@ Captured from sequential game-rendered frames at 60 simulation ticks per second,
 | Sunken Keep | Moon Graveyard |
 | ![Sunken Keep combat](docs/media/sunken-keep.png) | ![Moon Graveyard combat](docs/media/moon-graveyard.png) |
 
-![Earlier campaign victory screen](docs/media/victory.png)
+| Camp refuge | Adventurer dialogue |
+| --- | --- |
+| ![Animated camp refuge](docs/media/camp-refuge.png) | ![Progression-aware adventurer dialogue](docs/media/adventurer-dialogue.png) |
+| Quartermaster storehouse | Campaign victory |
+| ![Quartermaster and storehouse workers](docs/media/quartermaster-storehouse.png) | ![Campaign victory results](docs/media/victory.png) |
 
-The earlier victory menu is shown above for reference; final victory now returns to camp with a completion acknowledgement. See `artifacts/camp-contact-sheet.png` after running the camp capture.
-
-The media above predates the regional expansion. Updated gameplay-scale region captures are generated under `artifacts/regions/` by `capture_regions.py`. The expansion combines original deterministic Cruel World scenery with curated, transformed imported subsets.
+These fresh captures show the current authored pilot. `gameplay.gif` was regenerated from sequential actual gameplay frames; its reverse loop is described above. Development region captures remain available through `capture_regions.py` under `artifacts/regions/`.
 
 ## Run locally
 
@@ -46,7 +50,13 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-The public source repository does not redistribute the Hero Knight source pack or its generated runtime derivatives. For a complete local source checkout, download Hero Knight from the creator's page listed under [Assets and licenses](#assets-and-licenses), place the supplied `Hero Knight` directory at `assets/heroes/hero_knight/Hero Knight/`, then run `python build_presentation.py` before launching. Published playtest builds include the required runtime character data as part of the packaged game.
+The source checkout requires a user-supplied **full Zerie Pack 01** from the [official pack page](https://zerie.itch.io/tiny-rpg-character-asset-pack); the free Soldier/Orc subset is insufficient. Extract it under `assets/vendor/zerie/pack01-full/`, preserving the expected directory:
+
+```text
+assets/vendor/zerie/pack01-full/Tiny RPG Character Asset Pack 01 v2.0 -Full 22 Characters/Characters(100x100 split)/
+```
+
+`assets/vendor/zerie/` is intentionally ignored by Git and the raw pack is not included in the public GitHub source. Current campaign loading does not require the legacy Hero Knight setup or `build_presentation.py`. Published game packages include only runtime-required sheets within the playable game package, not the raw full pack or source files. Asset use remains subject to the [license terms below](#assets-and-licenses).
 
 Choose **Begin campaign**, select a hero, and press Enter to enter camp. Follow the path right to the central numbered **Expedition Gates**, press E to inspect destination/enemies/boss/readiness, then E or Enter again to depart. Gate 1 starts unlocked; each regional victory unlocks the next gate. Clear two finite waves per region (five then six enemies, at most four alive), defeat the boss, and enter the glowing exit to return to camp at full health. Score resets on each departure; the final return acknowledges campaign completion. Cleared gates remain available for replay.
 
@@ -93,22 +103,22 @@ Pause offers resume, settings, restart with class selection, and title. **Retry 
 | Class | Health / speed | Primary (F) | Secondary (E) |
 | --- | --- | --- | --- |
 | Knight | 150 HP / 4 px per tick | Buffered three-strike combo: 22/30/42 damage | Shield rush: 35 damage; 3 s cooldown |
-| Ranger | 100 HP / 6 px per tick | Bow arrow: 18 damage | Three piercing arrows: 24 damage each; 3.5 s cooldown |
+| Archer | 100 HP / 6 px per tick | Bow arrow: 18 damage | Three piercing arrows: 24 damage each; 3.5 s cooldown |
 | Wizard | 85 HP / 4 px per tick | Fireball: 26 damage | Piercing arcane wave: 50 damage, bypasses armor; 5 s cooldown |
 
-Primary attacks release after a nine-tick windup. Knight commits to melee; Ranger and Wizard can move at half speed and jump while firing, or cancel an unreleased shot into defensive mobility. Ranged primaries aim toward the nearest threat within 560 px ahead and 280 px vertically, otherwise travel horizontally. Each damage source hits each target once. The HUD shows health, score, wave, and ability readiness. Knight/Ranger defensive movement lasts 14 ticks at 12 px/tick with a 1.5 s cooldown; Wizard blink uses 18 px/tick and a 2.5 s cooldown.
+Primary attacks release after a nine-tick windup. Knight commits to melee; Archer and Wizard can move at half speed and jump while firing, or cancel an unreleased shot into defensive mobility. Ranged primaries aim toward the nearest threat within 560 px ahead and 280 px vertically, otherwise travel horizontally. Each damage source hits each target once. The HUD shows health, score, wave, and ability readiness. Knight/Archer defensive movement lasts 14 ticks at 12 px/tick with a 1.5 s cooldown; Wizard blink uses 18 px/tick and a 2.5 s cooldown.
 
 ## Current realms
 
 | Realm | Traversal and enemies | Boss / counterplay |
 | --- | --- | --- |
-| Verdant Ruins (3840 px) | Ruined approach → flooded grove → overgrown sanctuary; shallow pools, breakable vines, abandoned cache; goblins and flying eyes | Spore Sovereign: leave marked bursts and avoid alternating spore volleys |
-| Sunken Keep (4032 px) | Collapsed halls → prison/cistern → sealed armory; lever opens traversal bars, pots/cupboard, prisoner ledger, harmless haunted statue; mushrooms and shield skeletons | Iron Marauder: armored front, sweep, lunge, shockwave; punish rear, windup, or recovery |
-| Moon Graveyard (4224 px) | Outer cemetery → mausoleum row → moonlit crypt; optional three grave lanterns, urns, crypt record, bell monument; goblins, mushrooms, shield skeletons | Moon Eater: falling moon columns and diagonal shots; reposition and aim or jump into melee range |
+| Verdant Ruins (3840 px) | Ruined approach → flooded grove → overgrown sanctuary; shallow pools, breakable vines, abandoned cache; Orc and Armored Orc | Spore Sovereign: leave marked bursts and avoid alternating spore volleys |
+| Sunken Keep (4032 px) | Collapsed halls → prison/cistern → sealed armory; lever opens traversal bars, pots/cupboard, prisoner ledger, harmless haunted statue; Slime and Werebear | Iron Marauder: armored front, sweep, lunge, shockwave; punish rear, windup, or recovery |
+| Moon Graveyard (4224 px) | Outer cemetery → mausoleum row → moonlit crypt; optional three grave lanterns, urns, crypt record, bell monument; Skeleton, Greatsword Skeleton, and Armored Skeleton | Moon Eater: falling moon columns and diagonal shots; reposition and aim or jump into melee range |
 
 Orange markers and translucent red areas warn of attacks. Frontal armor reduces damage to one third outside enemy windup/recovery; rear attacks and arcane waves bypass it. Gates prevent skipping battles. Raised platforms are one-way. Hazards deal 16 damage; wave clears heal 15 HP, boss clears 30 HP, returns to camp restore full HP, and health pickups 30 HP.
 
-Regional interactions are fast and optional except the Keep lever, which raises the cistern gate over 48 simulation ticks with a visible opening animation and door sound. The Knight ground route reaches every required object; ladders and perches provide alternate routes. Shallow forest water scales horizontal movement to 75% (integer movement gives Ranger 4 px/tick, Knight/Wizard 3), only while grounded; jump velocity is unchanged. Vine barriers accept ordinary hero melee, arrows, fireballs, and secondary damage sources. Environmental breakables give 25 score / 3 HP once. Cache/ledger/record discoveries give 120 score / 12 HP; landmarks give 60 score; all three grave lanterns give 180 score / 18 HP once and illuminate the bell monument threshold. Descriptions are deliberately ambiguous atmosphere, not canonical history.
+Regional interactions are fast and optional except the Keep lever, which raises the cistern gate over 48 simulation ticks with a visible opening animation and door sound. The Knight ground route reaches every required object; ladders and perches provide alternate routes. Shallow forest water scales horizontal movement to 75% (integer movement gives Archer 4 px/tick, Knight/Wizard 3), only while grounded; jump velocity is unchanged. Vine barriers accept ordinary hero melee, arrows, fireballs, and secondary damage sources. Environmental breakables give 25 score / 3 HP once. Cache/ledger/record discoveries give 120 score / 12 HP; landmarks give 60 score; all three grave lanterns give 180 score / 18 HP once and illuminate the bell monument threshold. Descriptions are deliberately ambiguous atmosphere, not canonical history.
 
 Regional claims, lit lanterns, and destroyed props persist during checkpoint retries to prevent reward farming. The Keep gate resets closed when retrying before it, with its lever available again; checkpoints beyond it restore an open gate. A new expedition resets all regional features. Ambient animation uses deterministic tick formulas and never touches global random state. Pause freezes the full feature simulation. Fog/spray stay translucent and close to the ground; scenery remains behind combat actors and collision surfaces.
 
@@ -139,13 +149,14 @@ These are development directions, not shipped features or dated promises.
 - **Base camp expansion:** deeper functional services, crafting, and camp development beyond the current courtyard.
 - **Expeditions and progression:** prepare at camp, undertake expeditions, master bosses, collect materials, and develop equipment and camp services.
 - **World and art:** custom original pixel art, richer NPC and faction relationships, and deeper lore supplied later by the creator. Current names and encounters do not establish future lore canon.
-- **Optional exploration:** evaluate procedural expeditions assembled from authored chunks while retaining intentional encounter design and readable traversal.
+- **Procedural open world:** procedural generation, a long connected side-scrolling world, expanded faction-shaped realms, and Terraria-like exploration and scale are planned.
+- **Quests:** formal quests and a quest tracker are planned beyond the current progression-aware adventurer dialogue hooks.
 
 ## Long-term vision
 
-Cruel World is intended to grow into a side-scrolling pixel-art dark-fantasy action RPG. Design influences are principles: deliberate Soulslike combat and environmental storytelling; Monster Hunter-style preparation, boss mastery, and material progression; and MMO-like class identity, factions, and NPC world depth. These influences describe the intended experience; multiplayer is not a current feature or a commitment.
+The long-term direction is a procedurally generated, long side-scrolling dark-fantasy open world: Terraria-like exploration and scale combined with Dark Souls/Elden Ring combat, danger, bosses, quests, and environmental storytelling, with faction-shaped realms.
 
-The planned rhythm is a living camp, purposeful preparation, dangerous expeditions, and lasting progression. Story and lore will be developed later rather than filled in with invented canon here.
+The current release is a compact authored pilot with three realms, a camp, existing boss progression, and dialogue hooks. Procedural generation, a long connected world, formal quests, and expanded realms are planned rather than shipped. Story and lore will be developed later rather than filled in with invented canon here.
 
 ## Development and verification
 
@@ -161,16 +172,16 @@ python verify_campaign.py --ticks 60000 --output /tmp/cruel-campaign-verificatio
 
 `--class` starts directly in an expedition; add `--camp` for camp or `--storehouse` for the interior; `--environment 1|2|3` selects a debug realm; `--frames` bounds rendering; `--screenshot` saves the final frame. Without `--class`, play starts at the title. The campaign verifier uses ordinary attacks and checkpoint retries, captures all nine class/realm bosses, and fails unless every class wins with at most five retries. Bots supplement desktop/browser playtesting.
 
-`capture_camp.py` saves exterior depth views, indoor entrance/counter/ledger/rack/exit, three dialogue states, authored art, and the gameplay-scale contact sheet to `artifacts/`. `capture_presentation.py` captures menus and class/realm views into ignored development output. To regenerate the continuous gameplay GIF, install Pillow (`python -m pip install Pillow`) and run `python capture_gameplay.py`; frames stay in memory and saves use a temporary directory. `build_presentation.py` deterministically rebuilds curated Knight/Ranger derivatives and the logo without changing source packs.
+`capture_camp.py` saves exterior depth views, indoor entrance/counter/ledger/rack/exit, three dialogue states, authored art, and the gameplay-scale contact sheet to `artifacts/`. `capture_presentation.py` captures menus and class/realm views into ignored development output. To regenerate the continuous gameplay GIF, install Pillow (`python -m pip install Pillow`) and run `python capture_gameplay.py`; frames stay in memory and saves use a temporary directory. `build_presentation.py` deterministically rebuilds legacy Knight/Archer derivatives and the logo without changing source packs; those hero derivatives are not required by the Zerie campaign renderer.
 
 Desktop saves use atomic schema-versioned storage at `$XDG_DATA_HOME/cruelworld/save.json` or `~/.local/share/cruelworld/save.json`; override with `CRUELWORLD_SAVE_PATH` for isolated testing. Saves retain high score, settings, selected class, furthest realm, and cleared regions, class fittings, provisions, and completed expedition records (schema 4), not a resumable run. Version-2 saves infer prior victories from the furthest visited region so previously reached gates remain available. Legacy scores/settings and `huntress` IDs migrate safely. Corrupt values default safely; write errors appear in the UI. Missing audio degrades to fallbacks; required invalid sprites cause a clear startup error.
 
 
-## Camp services and original assets
+## Camp services and assets
 
-The SUPPLIES storehouse is the first enterable building: approach its recessed door and press E/Enter. A short fade leads into a 1120px authored hall; the courtyard exit returns you to the same threshold and exterior camera. The Quartermaster works inside at the counter, offering a single expedition provision. The expedition ledger lists all three routes, lock/clear state, enemies, and bosses without departing. The preparation rack reports class primary/secondary, defensive movement, damage, maximum health, speed, and controls. The ledger and preparation rack only inspect readiness; the counter selects a provision. Other service buildings remain exterior services. The Blacksmith forges and equips one bounded class fitting. The Scout/Cartographer shows route availability; each physical gate supplies exact enemies and boss. The Healer restores full health or reports that you are already well. The Arcanist explains the selected secondary ability and recovery. The Trainer gives class controls and tracks hits on the straw dummy at the right wall. The Chronicler opens persistent regional discovery, material, hero completion, class best score, and provision records. NPCs cannot be damaged; practice grants no score. E/Enter closes ordinary dialogue; Escape closes fitting, provision, journal, or dialogue panels before pause. Dialogue freezes movement and attack simulation.
+The SUPPLIES storehouse is the first enterable building: approach its recessed door and press E/Enter. A short fade leads into a 1120px authored hall; the courtyard exit returns you to the same threshold and exterior camera. The animated Quartermaster works inside at the counter alongside animated workers, offering a single expedition provision. The expedition ledger lists all three routes, lock/clear state, enemies, and bosses without departing. The preparation rack reports class primary/secondary, defensive movement, damage, maximum health, speed, and controls. The ledger and preparation rack only inspect readiness; the counter selects a provision. Other service buildings remain exterior services. The Blacksmith forges and equips one bounded class fitting. The Scout/Cartographer shows route availability; each physical gate supplies exact enemies and boss. The Healer restores full health or reports that you are already well. The Arcanist explains the selected secondary ability and recovery. The Trainer gives class controls and tracks hits on the straw dummy at the right wall. The Chronicler opens persistent regional discovery, material, hero completion, class best score, and provision records. NPCs cannot be damaged; practice grants no score. E/Enter closes ordinary dialogue; Escape closes fitting, provision, journal, or dialogue panels before pause. Dialogue freezes movement and attack simulation.
 
-`camp_interior.py` owns the separate supply hall, its inspection panels, deterministic shelving, timber roof, masonry, reserve cage, weapon bundles, maps, barrels, herbs, ropes, lanterns, workers, and foreground lintel. Normal movement/collision stays active in both worlds; interiors have no combat practice. Temporary attacks and particles clear at doorway transitions while the hero and campaign state persist. `camp.py` creates the original 1100×300 refuge and 24×36 NPC sprites at runtime, scaled exactly 2× with nearest-neighbor sampling. Source generation is deterministic and does not edit imported art. `python build_camp_audio.py` rebuilds original mono 22050 Hz, 16-second WAV loops in `assets/audio/camp/`: a plucked harmonic instrument/drone score and restrained filtered village/fire noise with distant forge taps. A third loop, `interior.wav`, adds original restrained lantern hiss and periodic wood resonances. The storehouse uses quieter camp music and replaces courtyard ambience with this room tone; exiting restores the outdoor mix. These are original Cruel World assets created for this implementation, without third-party samples. Music and ambience use independent reserved mixer channels and obey Sound/Volume settings. Pause freezes both loops and fade clocks; resume restores their playback positions.
+`camp_interior.py` owns the separate supply hall, its inspection panels, deterministic shelving, timber roof, masonry, reserve cage, weapon bundles, maps, barrels, herbs, ropes, lanterns, workers, and foreground lintel. Normal movement/collision stays active in both worlds; interiors have no combat practice. Temporary attacks and particles clear at doorway transitions while the hero and campaign state persist. `camp.py` creates the original 1100×300 refuge art at runtime, scaled exactly 2× with nearest-neighbor sampling. Camp service NPCs, guards, and adventurers use animated Zerie humanoid sheets; the storehouse also uses an animated Quartermaster and workers. Scenery generation is deterministic and does not edit imported art. `python build_camp_audio.py` rebuilds original mono 22050 Hz, 16-second WAV loops in `assets/audio/camp/`: a plucked harmonic instrument/drone score and restrained filtered village/fire noise with distant forge taps. A third loop, `interior.wav`, adds original restrained lantern hiss and periodic wood resonances. The storehouse uses quieter camp music and replaces courtyard ambience with this room tone; exiting restores the outdoor mix. These are original Cruel World assets created for this implementation, without third-party samples. Music and ambience use independent reserved mixer channels and obey Sound/Volume settings. Pause freezes both loops and fade clocks; resume restores their playback positions.
 
 Verification and capture additions:
 
@@ -180,19 +191,20 @@ Verification and capture additions:
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy CRUELWORLD_SAVE_PATH=/tmp/cruel-camp-smoke.json .venv/bin/python main.py --class warrior --camp --frames 120 --screenshot artifacts/camp-smoke.png
 ```
 
-Use `--class warrior` for the Knight (the class ID remains `warrior`). Camp captures and a twenty-three-view contact sheet at gameplay scale go under `artifacts/`. `tests/test_camp_interior.py` covers doors, fades, retained exterior position/camera, class/state preservation, inspection, Escape/pause, room bounds, deterministic art, actor isolation, audio/mute, and browser manifest inclusion. `tests/test_camp.py` covers services, gates, progression, migration, original art/audio determinism, channels, and camp rendering; existing combat tests explicitly launch expeditions. The campaign verifier departs from camp between regions and requires all nine boss captures plus final camp completion for every class. Browser staging includes `camp.py`, `camp_interior.py`, and all three audio loops; browser interactive/audio behavior still requires a real browser playtest.
+Use `--class knight` for the Knight (`warrior` remains a compatible save/CLI ID). Camp captures and a twenty-three-view contact sheet at gameplay scale go under `artifacts/`. `tests/test_camp_interior.py` covers doors, fades, retained exterior position/camera, class/state preservation, inspection, Escape/pause, room bounds, deterministic art, actor isolation, audio/mute, and browser manifest inclusion. `tests/test_camp.py` covers services, gates, progression, migration, original art/audio determinism, channels, and camp rendering; existing combat tests explicitly launch expeditions. The campaign verifier departs from camp between regions and requires all nine boss captures plus final camp completion for every class. Browser staging includes `camp.py`, `camp_interior.py`, and all three audio loops; browser interactive/audio behavior still requires a real browser playtest.
 
-Current camp limitations: only the Quartermaster storehouse is enterable. Other districts retain their existing services; there is no inventory, currency, crafting, or purchasing system. Porters and guards are decorative, non-colliding actors. The short supply hall suggests reserve rooms without making them traversable. Hub principles draw on compact preparation spaces, landmarks, service locations, short transitions, and a return-to-base rhythm familiar from Halls of Torment and the original PS2 Monster Hunter; all new camp art, names, composition, and audio are original. Automated headless captures cannot establish real-browser audio or input behavior.
+Current camp limitations: only the Quartermaster storehouse is enterable. Other districts retain their existing services; there is no inventory, currency, crafting, or purchasing system. Porters and guards are decorative, non-colliding actors. The short supply hall suggests reserve rooms without making them traversable. Hub principles draw on compact preparation spaces, landmarks, service locations, short transitions, and a return-to-base rhythm familiar from Halls of Torment and the original PS2 Monster Hunter; camp scenery, names, composition, and audio are original; humanoid actors use Zerie assets. Automated headless captures cannot establish real-browser audio or input behavior.
 
 ## Assets and licenses
 
 
-Existing imported assets retain their original handling. New regional assets are tightly cropped, palette-adapted runtime derivatives with integrated masonry/ripple accents; no source archive or full new pack is copied. Original license records remain under `assets/licenses/` and in their supplied directories. These are the terms recorded in the supplied license files, without inferred additional permissions.
+The raw Zerie pack is a user-supplied local dependency under the ignored `assets/vendor/zerie/` path, not part of the public source repository. The legacy Hero Knight, ranger, wizard, and monster rows below preserve provenance records; those character assets are not the current campaign actor sheets. Existing imported assets retain their original handling. New regional assets are tightly cropped, palette-adapted runtime derivatives with integrated masonry/ripple accents; no source archive or full new pack is copied. Original license records remain under `assets/licenses/` and in their supplied directories. These are the terms recorded in the supplied license files, without inferred additional permissions.
 
 | Assets | Creator / source | Recorded terms |
 | --- | --- | --- |
+| `assets/vendor/zerie/pack01-full/` (local-only full pack; ignored by Git) | [Zerie Tiny RPG Character Asset Pack 01](https://zerie.itch.io/tiny-rpg-character-asset-pack) | Personal/commercial video-game-project use and modification permitted; redistribution, resale, or re-upload of original or modified assets prohibited; AI training and NFT use prohibited. Credit appreciated, not required. Published playable packages contain only runtime-required sheets, not the raw full pack or source files. |
 | `assets/heroes/knight/` (generated locally; not in the public source repository) | Original helmeted derivatives rebuilt by `build_presentation.py` | Runtime-only curated frames; source license below applies |
-| `assets/heroes/hero_knight/` (local dependency; not redistributed through GitHub) | [Sven Hero Knight](https://sventhole.itch.io/hero-knight) | Commercial/non-commercial game use permitted; redistribution on file-sharing sites prohibited. Exact supplied terms: `assets/licenses/HERO_KNIGHT_TERMS.txt` |
+| `assets/heroes/hero_knight/` (legacy local dependency; not redistributed through GitHub) | [Sven Hero Knight](https://sventhole.itch.io/hero-knight) | Commercial/non-commercial game use permitted; redistribution on file-sharing sites prohibited. Exact supplied terms: `assets/licenses/HERO_KNIGHT_TERMS.txt` |
 | `assets/heroes/ranger_source/`, `assets/heroes/ranger/` | [LuizMelo Martial Hero](https://luizmelo.itch.io/martial-hero); original hooded English woodland-ranger pixel derivatives | CC0; original `Martial Hero/License.txt` retained; `assets/licenses/RANGER_SOURCE_CC0.txt` |
 | `assets/fonts/medievalsharp/` | MedievalSharp, Copyright (c) 2011 wmk69 (wmk69@o2.pl), Reserved Font Name MedievalSharp | SIL Open Font License 1.1; full `OFL.txt` retained; copy at `assets/licenses/MEDIEVALSHARP_OFL.txt` |
 | `assets/fonts/pixeloperator/` | [Pixel Operator by Jayvee Enaguas / HarvettFox96](https://www.dafont.com/pixel-operator.font) | CC0 1.0 Universal; full supplied `LICENSE.txt` retained |
@@ -216,7 +228,7 @@ No repository-wide source-code license has been declared. Asset permissions are 
 
 ## Progression and aftermath
 
-First completed boss expeditions grant Sovereign Mycelium, Marauder Iron, and Lunar Remnant respectively. Schema 3 clears migrate into those permanent unlocks without fabricated expedition records. Replay clears award score and update records but never duplicate materials. Each class has three bounded fittings: healing efficiency, secondary recovery, and either mobility recovery or Ranger projectile reach. The Blacksmith uses one equipped slot per class. Press 1/2/3 to forge and equip an unlocked fitting, 0 to unequip, Esc to close. Forging is free once its material is held; materials are retained, so experimentation cannot exhaust them. Materials are proof of victory rather than consumable currency.
+First completed boss expeditions grant Sovereign Mycelium, Marauder Iron, and Lunar Remnant respectively. Schema 3 clears migrate into those permanent unlocks without fabricated expedition records. Replay clears award score and update records but never duplicate materials. Each class has three bounded fittings: healing efficiency, secondary recovery, and either mobility recovery or Archer projectile reach. The Blacksmith uses one equipped slot per class. Press 1/2/3 to forge and equip an unlocked fitting, 0 to unequip, Esc to close. Forging is free once its material is held; materials are retained, so experimentation cannot exhaust them. Materials are proof of victory rather than consumable currency.
 
 The storehouse counter offers exactly one provision (1/2/3): Field Dressing automatically heals 25 HP once when a living hero falls to 25% health; Warding Salt reduces environmental damage 25%, never enemy attacks; Hunters Charm adds 10% to optional discovery awards, never kills or breakable props. A fresh departure replenishes it. Checkpoint retry retains provision use, discovery claims, kill claims, and wave rewards; repeated kills cannot farm score or pickups. Expedition score resets on departure. Lifetime discoveries, class best scores, hero completion counts, and provision departure counts are recorded only on completion, atomically with the first-clear flag. Abandoned expeditions never enter the journal; existing legacy high scores remain preserved.
 
@@ -227,3 +239,40 @@ Gate confirmation begins a fixed-tick interstitial with the destination and one 
 Audio keeps music and ambience independent. Deterministic 350 ms fade-out / 550 ms fade-in replaces changed loops at silence, rather than overlapping long decoded tracks on browser mixers; unchanged camp music retains playback phase. Repeated ambience requests do not reload or restart playback. Settings multiply fade gain and pause freezes fade time. This is deliberately a fade-through-silence alternative to overlapping crossfades for predictable pygbag channel behavior. No new sounds or imported asset changes are required.
 
 `build_web.py` stages `progression.py` and all existing runtime assets. Browser saves remain session filesystem saves (durability across page reloads is not promised). Run `.venv/bin/python -m unittest discover -s tests`, `.venv/bin/python verify_campaign.py --output artifacts/progression-campaign`, and `.venv/bin/python capture_progression.py` for records, combat, and 800x600 camp/service/results/transition captures. Original aftermath visuals are deterministic runtime drawing. Real browser playback and human combat balance still require interactive playtesting.
+
+
+## Zerie playable pilot
+
+Class selection and live heroes now load unshadowed Knight, Archer, and Wizard
+100×100 split sheets from `assets/vendor/zerie/pack01-full` at 2.5× nearest-neighbor
+scale. `knight` and `archer` CLI inputs normalize to stable `warrior` and `ranger`
+save IDs; `huntress` remains supported. Existing fittings, records, stats, damage
+ticks, action durations, and campaign rewards remain compatible. Legacy hero
+derivative builders and assets remain available, but campaign loading does not
+require them.
+
+`zerie_runtime.py` documents the action sources: Walk supplies Run, Jump, Fall,
+Roll and WallSlide; Idle supplies LedgeGrab; Knight Block supplies shield rush
+and shield hold. Archer Attack02 also supplies the volley (Attack3). Hurt supplies
+Hit. Wizard uses its separate actor attack sheets without embedded magic effects;
+the game's existing projectiles remain responsible for damage and effects. Source
+sequences are sampled to existing frame counts to preserve combat timing. Standing
+Idle bounds anchor all actions at the feet without cropping weapon sweeps.
+
+`REALM_ROSTERS` assigns forest Orc/Armored Orc, graveyard Skeleton/Greatsword
+Skeleton/Armored Skeleton, and cave Slime/Werebear. Each entry names its retained
+combat archetype; Armored Skeleton and Werebear use Idle when the archetype requests Shield,
+since these actors have no Block sheet. Boss sprites, names, attacks, and progression
+remain the existing campaign encounters for this pilot. Camp services use distinct Swordsman, Armored Axeman, Lancer, Priest, Wizard,
+Knight Templar, and Soldier actors. Courtyard adventurers Mara Reed, Brann Hollow,
+and Vey Ash offer forest, cave, and graveyard hooks that follow existing gate
+unlocks and clear flags; these conversations add no quest tracking. Guards and
+workers use real animated humanoid sheets, including the storehouse Quartermaster.
+Camp captures: `.venv/bin/python capture_camp.py` writes whole-camp, service,
+adventurer progression dialogue, and interior views to `artifacts/zerie/camp-slice`.
+Browser staging includes only the selected actor/action sheets, not the full pack,
+shadow variants, catalog, or Aseprite sources.
+
+Run `.venv/bin/python capture_zerie_runtime.py --playable --output artifacts/zerie/playable`
+for live class-selection and realm captures plus an action contact sheet. The
+original Soldier/Orc scale proof remains the default capture mode.

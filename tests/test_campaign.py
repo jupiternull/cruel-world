@@ -42,7 +42,7 @@ class CampaignTests(unittest.TestCase):
             for animation, count in animations.items():
                 frames = self.game.assets['heroes'][name][animation]
                 self.assertEqual(len(frames), count)
-                self.assertTrue(all(f.get_size() == (width * scale, height * scale) for f in frames))
+                self.assertTrue(all(f.get_size() == (250, 250) for f in frames))
                 self.assertTrue(all(f.get_bounding_rect().width for f in frames))
         for species, animations in MONSTER_MANIFEST.items():
             for animation, count in animations.items():
@@ -579,9 +579,8 @@ class PresentationTests(unittest.TestCase):
                            key=lambda p: int(p.stem.rsplit('_', 1)[1]))
             self.assertEqual([int(p.stem.rsplit('_', 1)[1]) for p in paths], list(range(count)))
             for i, path in enumerate(paths):
-                expected = pygame.transform.scale(pygame.image.load(str(path)), (200, 110))
-                actual = self.game.assets['heroes']['warrior'][state][i]
-                self.assertEqual(pygame.image.tobytes(actual, 'RGBA'), pygame.image.tobytes(expected, 'RGBA'))
+                self.assertTrue(path.is_file())
+        self.assertEqual(self.game.assets['heroes']['warrior'].actor, 'Knight')
         self.game.reset_game('warrior')
         self.game.launch_expedition(0, debug=True)
         for stage in (1, 2, 3):
@@ -633,14 +632,14 @@ class PresentationTests(unittest.TestCase):
             return load(path)
         with patch('pygame.image.load',side_effect=record): load_campaign_assets()
         self.assertFalse(any('/hero_knight/' in path for path in paths))
-        self.assertTrue(any('/heroes/knight/' in path for path in paths))
+        self.assertTrue(any('/pack01-full/' in path and '/Knight/' in path for path in paths))
 
-    def test_missing_knight_derivative_rebuilds_without_bare_head_fallback(self):
+    def test_runtime_does_not_require_legacy_knight_derivatives(self):
         from assets import load_campaign_assets
         from build_presentation import knight_assets
         with patch('pathlib.Path.exists',return_value=False), patch('build_presentation.knight_assets',wraps=knight_assets) as rebuild:
             frames=load_campaign_assets()['heroes']['warrior']
-        rebuild.assert_called_once_with()
+        rebuild.assert_not_called()
         self.assertEqual(len(frames['Roll']),9)
         self.assertEqual(CLASSES['warrior']['name'],'Knight')
 
@@ -760,7 +759,7 @@ class PresentationTests(unittest.TestCase):
         self.game.reset_game('huntress')
         self.game.launch_expedition(0, debug=True)
         self.assertEqual(self.game.knight.class_id, 'ranger')
-        self.assertEqual(self.game.knight.stats['name'], 'Ranger')
+        self.assertEqual(self.game.knight.stats['name'], 'Archer')
         self.assertEqual(list(CLASSES), ['warrior','ranger','wizard'])
         self.assertEqual(CLASSES['warrior']['name'], 'Knight')
 

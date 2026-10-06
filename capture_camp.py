@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import pygame
 from main import Game
-from camp import POSITIONS, GATES
+from camp import POSITIONS, GATES, ADVENTURERS
 
 
 def capture(output=Path('artifacts')):
@@ -22,6 +22,12 @@ def capture(output=Path('artifacts')):
                ('gate-locked',GATES[1],'service',[]),('gate-cleared',GATES[2],'service',[0,1,2]),
                ('training',2100,'attack',[]),('trainer',POSITIONS[5],'service',[]),
                ('scout',POSITIONS[2],'service',[])]
+        views += [('blacksmith', POSITIONS[1], None, [])]
+        for npc in ADVENTURERS:
+            for state, clears in [('locked', []), ('available', list(range(npc['realm']))),
+                                  ('cleared', list(range(npc['realm']+1)))]:
+                views.append((npc['name'].lower().replace(' ', '-')+'-'+state,
+                              npc['x'], 'service', clears))
         indoor = [('interior-entrance',90,False),('interior-counter',350,False),
                   ('interior-ledger',620,False),('interior-equipment',870,False),
                   ('interior-exit',90,False),('interior-dialogue',350,True),
@@ -48,6 +54,16 @@ def capture(output=Path('artifacts')):
             game.draw()
             pygame.image.save(game.screen,output/(name+'.png'))
             sheet.blit(game.screen,((i%3)*800,(i//3)*600))
+        game.service = None
+        game.world.dialogue = None
+        panorama = pygame.Surface((game.world.width, 600))
+        for left in (0, 700, 1400):
+            game.camera.x = left
+            game.world.draw(game.screen, game.fonts, game)
+            game.knight.draw(game.screen, game.camera)
+            game.world.draw_foreground(game.screen, game)
+            panorama.blit(game.screen, (left, 0))
+        pygame.image.save(panorama, output/'camp-whole.png')
         # Include rebuildable original art at its native runtime dimensions.
         pygame.image.save(game.world.background,output/'camp-courtyard.png')
         game.service=None
@@ -78,4 +94,4 @@ def capture(output=Path('artifacts')):
 
 
 if __name__=='__main__':
-    capture()
+    capture(Path('artifacts/zerie/camp-slice'))

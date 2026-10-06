@@ -125,9 +125,9 @@ class CampTests(unittest.TestCase):
     def test_deterministic_original_art_and_audio(self):
         self.assertEqual(courtyard().get_size(),(WIDTH,600))
         self.assertEqual(pygame.image.tostring(courtyard(),'RGB'),pygame.image.tostring(courtyard(),'RGB'))
-        sprites=[pygame.image.tostring(npc_sprite(i),'RGBA') for i in range(7)]
+        sprites=[pygame.image.tostring(npc_sprite(i)['Idle'][0],'RGBA') for i in range(7)]
         self.assertEqual(len(set(sprites)),7)
-        self.assertTrue(all(npc_sprite(i).get_size()==(48,72) for i in range(7)))
+        self.assertTrue(all(npc_sprite(i)['Idle'][0].get_size()==(250,250) for i in range(7)))
         with tempfile.TemporaryDirectory() as directory:
             target=Path(directory)
             build(target)

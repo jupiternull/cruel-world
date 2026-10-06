@@ -47,6 +47,7 @@ desktop.ini
 # Licensed local-only character source and generated derivatives
 /assets/heroes/hero_knight/
 /assets/heroes/knight/
+/assets/vendor/zerie/
 
 # Imported source-pack material not used by the runtime
 /assets/heroes/huntress/

@@ -31,6 +31,15 @@ ENVIRONMENTS = [
 ]
 
 
+from zerie_runtime import REALM_ROSTERS
+
+for environment in ENVIRONMENTS:
+    roster = REALM_ROSTERS[environment['id']]
+    environment['faction'] = roster['faction']
+    environment['enemy_roster'] = roster['enemies']
+    environment['enemies'] = tuple(species for actor, species in roster['enemies'])
+
+
 class Campaign:
     def __init__(self):
         self.index = 0

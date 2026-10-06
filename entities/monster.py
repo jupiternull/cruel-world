@@ -19,7 +19,8 @@ class Monster(Entity):
         self.damage = 18 if boss else 8
         self.state = 'Flight' if self.flying else 'Idle'
         self.current_frames = frames[self.state]
-        self.anchor = self.current_frames[0].get_bounding_rect()
+        self.anchor = getattr(frames, 'anchor', self.current_frames[0].get_bounding_rect())
+        self.actor = getattr(frames, 'actor', species)
         self.current_frame_idx = 0
         self.animation_timer = 0
         self.image = self.current_frames[0]

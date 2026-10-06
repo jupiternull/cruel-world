@@ -23,8 +23,9 @@ class SaveData:
         try:
             data = json.loads(self.path.read_text())
             if isinstance(data, dict):
-                if data.get('version') in (2, 3, 4) and data.get('last_class') in ('warrior', 'ranger', 'huntress', 'wizard'):
-                    self.last_class = 'ranger' if data['last_class'] == 'huntress' else data['last_class']
+                if data.get('version') in (2, 3, 4) and data.get('last_class') in ('warrior', 'ranger', 'huntress', 'wizard', 'knight', 'archer'):
+                    from zerie_runtime import canonical_class
+                    self.last_class = canonical_class(data['last_class'])
                 furthest = data.get('furthest_environment', 0) if data.get('version') in (2, 3, 4) else 0
                 if type(furthest) is int:
                     self.furthest_environment = max(0, min(2, furthest))

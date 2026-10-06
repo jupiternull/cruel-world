@@ -10,8 +10,8 @@ from camp import GATES
 from progression import PROVISIONS
 
 
-def main():
-    output = Path('artifacts/progression')
+def main(output=Path('artifacts/progression')):
+    output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     shots = []
     with tempfile.TemporaryDirectory() as d:

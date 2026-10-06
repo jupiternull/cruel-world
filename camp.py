@@ -3,6 +3,8 @@ import random
 import pygame
 from campaign import World, ENVIRONMENTS
 from entities.hero import CLASSES
+from zerie_runtime import (CAMP_SERVICE_ACTORS, CAMP_WORKER_ACTORS,
+                           CAMP_ADVENTURER_ACTORS, camp_actor, draw_camp_actor)
 
 ROLES = ['Quartermaster', 'Blacksmith', 'Scout / Cartographer', 'Healer', 'Arcanist', 'Trainer', 'Chronicler']
 COLORS = [(155, 126, 76), (173, 79, 48), (77, 139, 123), (190, 184, 145), (127, 97, 165), (120, 139, 158), (159, 112, 112)]
@@ -193,55 +195,44 @@ def courtyard():
 
 
 def npc_sprite(index):
-    s = pygame.Surface((24, 36), pygame.SRCALPHA)
-    c = COLORS[index]
-    pygame.draw.ellipse(s,(15,17,23,160),(2,32,21,4))
-    pygame.draw.rect(s,(45,36,32),(6,28,4,6))
-    pygame.draw.rect(s,(45,36,32),(14,28,4,6))
-    pygame.draw.polygon(s,c,[(7,12),(17,12),(21,29),(3,29)])
-    pygame.draw.rect(s,(185,144,107),(8,5,8,8))
-    pygame.draw.rect(s,(31,30,34),(14,8,2,2))
-    pygame.draw.rect(s,(143,104,78),(10,12,6,2))
-    pygame.draw.line(s,tuple(min(255,v+25) for v in c),(8,16),(6,25),2)
-    pygame.draw.rect(s,(69,52,42),(5,25,14,2))
-    pygame.draw.rect(s,tuple(max(0,v-35) for v in c),(6,3,12,5))
-    if index == 4:
-        pygame.draw.polygon(s,c,[(5,5),(12,0),(18,5)])
-    elif index in (2,6):
-        pygame.draw.polygon(s,tuple(max(0,v-25) for v in c),[(4,11),(6,3),(17,3),(19,11),(15,8),(8,8)])
-    elif index == 3:
-        pygame.draw.rect(s,(215,205,173),(6,3,12,3))
-    elif index == 5:
-        pygame.draw.rect(s,(156,164,170),(6,2,12,5))
-    elif index == 1:
-        pygame.draw.rect(s,(99,64,44),(7,18,10,10))
-        pygame.draw.rect(s,(185,144,107),(2,16,4,9))
-    if index == 1:
-        pygame.draw.rect(s,(173,166,153),(19,10,4,4))
-        pygame.draw.rect(s,(100,70,42),(20,14,2,12))
-    elif index in (2,6):
-        pygame.draw.rect(s,(206,189,145),(1,18,10,7))
-    elif index in (3,4):
-        pygame.draw.line(s,(134,107,67),(21,5),(21,31),2)
-        pygame.draw.circle(s,(125,187,180) if index == 3 else (184,136,230),(21,5),3)
-    elif index == 5:
-        pygame.draw.line(s,(187,187,180),(20,9),(20,29),2)
-    else:
-        pygame.draw.rect(s,(202,176,108),(10,19,4,3))
-    return pygame.transform.scale(s,(48,72))
+    return camp_actor(CAMP_SERVICE_ACTORS[index])
 
 
 def inhabitant_sprite(index):
-    s = pygame.Surface((16,28),pygame.SRCALPHA)
-    cloth = ((81,91,87),(98,83,74),(87,83,102),(86,92,105))[index]
-    pygame.draw.ellipse(s,(15,17,23,120),(1,25,14,3))
-    pygame.draw.rect(s,(53,44,39),(4,22,3,5))
-    pygame.draw.rect(s,(53,44,39),(10,22,3,5))
-    pygame.draw.polygon(s,cloth,[(5,9),(11,9),(14,23),(2,23)])
-    pygame.draw.rect(s,(149,118,93),(5,3,6,7))
-    pygame.draw.rect(s,(62,58,55),(4,2,8,4))
-    pygame.draw.line(s,(107,96,79),(4,12),(2,20),2)
-    return pygame.transform.scale(s,(32,56))
+    return camp_actor(CAMP_WORKER_ACTORS[index])
+
+
+ADVENTURERS = [
+    {'name': 'Mara Reed', 'epithet': 'Orc-road survivor', 'x': 310, 'realm': 0,
+     'locked': ['The forest road is barred. Wait for the scouts to open it.',
+                'Orc tracks gather where the trees swallow the light.'],
+     'available': ['Orcs are gathering along the forest road. I lost my trail there.',
+                   'Take the first gate. Break their advance before another patrol vanishes.'],
+     'cleared': ['You broke the forest threat. The road has room for footsteps again.',
+                 'I will watch the tree line. A quiet wood can still hide an orc blade.']},
+    {'name': 'Brann Hollow', 'epithet': 'Depth scout', 'x': 1515, 'realm': 1,
+     'locked': ['Something feral scrapes beneath the cave mouth.',
+                'Clear the forest route first. We cannot spare a patrol for the depths yet.'],
+     'available': ['The cave route is open. Slime coats the stone; heavier things move below.',
+                   'Take the second gate. Silence that threat before it reaches the surface.'],
+     'cleared': ['The depths have fallen quiet since your return.',
+                 'I will test the lower paths. Do not mistake silence for an empty cave.']},
+    {'name': 'Vey Ash', 'epithet': 'Grave watcher', 'x': 1750, 'realm': 2,
+     'locked': ['The graveyard dead are standing where they should lie.',
+                'Settle the cave threat first. The third gate must wait.'],
+     'available': ['The graveyard route is open. Undead gather beneath that pale sky.',
+                   'Take the third gate. Put their master down before more graves open.'],
+     'cleared': ['The dead have lost their master. That is a mercy, however brief.',
+                 'I will keep watch by the graves. Rest while the bells are still.']},
+]
+
+
+def adventurer_dialogue(save, index):
+    npc = ADVENTURERS[index]
+    realm = npc['realm']
+    state = 'cleared' if realm in save.cleared_regions else 'available' if save.gate_unlocked(realm) else 'locked'
+    return {'title': npc['name'] + ' - ' + npc['epithet'],
+            'lines': [ENVIRONMENTS[realm]['name'] + ' | ' + state.upper()] + npc[state]}
 
 
 class Camp(World):
@@ -250,6 +241,7 @@ class Camp(World):
         self.background = courtyard()
         self.sprites = [npc_sprite(i) for i in range(7)]
         self.inhabitants = [inhabitant_sprite(i) for i in range(4)]
+        self.adventurers = [camp_actor(actor) for actor in CAMP_ADVENTURER_ACTORS]
         self.dialogue = None
         self.notice = ''
         self.notice_timer = 0
@@ -259,6 +251,7 @@ class Camp(World):
 
     def nearby(self, hero):
         candidates = [('door',0,182)] + [('npc',i,x) for i,x in enumerate(POSITIONS) if i != 0] + [('gate',i,x) for i,x in enumerate(GATES)]
+        candidates += [('adventurer', i, npc['x']) for i, npc in enumerate(ADVENTURERS)]
         candidates = [v for v in candidates if abs(hero.rect.centerx-v[2]) < 38 and hero.rect.bottom >= 530]
         return min(candidates,key=lambda v:abs(hero.rect.centerx-v[2])) if candidates else None
 
@@ -280,6 +273,9 @@ class Camp(World):
         if not target:
             return
         kind,index,_ = target
+        if kind == 'adventurer':
+            self.dialogue = adventurer_dialogue(game.save, index)
+            return
         if kind == 'door':
             game.transition_camp(True)
             return
@@ -329,24 +325,28 @@ class Camp(World):
         for i,(kind,footprint) in enumerate(STATIONS):
             x = POSITIONS[i]-camera.x
             if i != 0:
-                screen.blit(self.sprites[i],(x-24,488))
+                draw_camp_actor(screen, self.sprites[i], x, 560, self.ticks+i*11, facing_right=i < 4)
             label = fonts['small'].render(SIGN_NAMES[i],True,(220,203,163))
             pygame.draw.rect(screen,(43,35,31),(x-label.get_width()//2-7,458,label.get_width()+14,24))
             pygame.draw.rect(screen,COLORS[i],(x-label.get_width()//2-7,458,label.get_width()+14,24),1)
             screen.blit(label,(x-label.get_width()//2,460))
         for i,(x,y) in enumerate(self.ambient_positions()):
             sprite = self.inhabitants[i]
-            screen.blit(sprite,(x-camera.x,y+14+(self.ticks//12+i)%2*2))
+            draw_camp_actor(screen, sprite, x-camera.x, 550, self.ticks+i*11, True, (self.ticks//3+i*32)%100 >= 50)
+        for i, npc in enumerate(ADVENTURERS):
+            x = npc['x']-camera.x
+            draw_camp_actor(screen, self.adventurers[i], x, 560, self.ticks+i*17, facing_right=i == 0)
+            label = fonts['small'].render(npc['name'], True, (224,211,184))
+            screen.blit(label, (x-label.get_width()//2, 418))
         # Crate porter crosses the supply route independently of gameplay RNG.
         porter_x = 215 + abs((self.ticks // 2) % 1420 - 710) - camera.x
-        screen.blit(self.inhabitants[1],(porter_x,496))
+        draw_camp_actor(screen, self.inhabitants[1], porter_x, 550, self.ticks, True, (self.ticks//2)%1420 >= 710)
         pygame.draw.rect(screen,(135,94,54),(porter_x-5,514,40,28))
         pygame.draw.line(screen,(63,44,31),(porter_x-5,514),(porter_x+34,541),3)
         # Guard silhouettes stand on the raised wall walk; forge tender works below.
         for x in (650,1235,1790):
-            screen.blit(self.inhabitants[3],(x-camera.x,168))
-            pygame.draw.line(screen,(151,155,151),(x+31-camera.x,169),(x+31-camera.x,221),2)
-        screen.blit(self.inhabitants[1],(466-camera.x,495))
+            draw_camp_actor(screen, self.inhabitants[3], x-camera.x, 220, self.ticks+x)
+        draw_camp_actor(screen, self.inhabitants[1], 490-camera.x, 550, self.ticks)
         hammer_y = 502 + (self.ticks//18)%2*9
         pygame.draw.line(screen,(151,127,89),(480-camera.x,518),(497-camera.x,hammer_y),3)
         pygame.draw.rect(screen,(142,146,140),(492-camera.x,hammer_y-3,12,6))
@@ -445,7 +445,7 @@ class Camp(World):
     def draw_overlay(self, screen, fonts, game):
         target = self.nearby(game.knight)
         if target and not self.dialogue:
-            label = 'Enter Quartermaster storehouse' if target[0]=='door' else ROLES[target[1]] if target[0]=='npc' else f'Expedition Gate {target[1]+1}'
+            label = 'Enter Quartermaster storehouse' if target[0]=='door' else ADVENTURERS[target[1]]['name'] if target[0]=='adventurer' else ROLES[target[1]] if target[0]=='npc' else f'Expedition Gate {target[1]+1}'
             self.panel(screen,fonts,[label + '  [E]'],(155,365,490,36))
         self.panel(screen,fonts,['COURTYARD REFUGE', 'E: interact   F/R: practice   Esc: pause'],(180,12,440,58))
         if self.notice_timer:

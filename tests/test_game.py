@@ -414,8 +414,9 @@ class GameplayTests(unittest.TestCase):
     def test_enemy_reaches_high_platform_and_gravity_lands(self):
         game = self.game
         game.knight.rect.topleft = (560, 304)
-        game.spawn()
-        enemy = game.enemies[0]
+        from entities.monster import Monster
+        enemy = Monster(560, 504, game.assets['monsters']['Flying eye'], 'Flying eye')
+        game.enemies.append(enemy)
         enemy.rect.topleft = (560, 504)
         minimum = enemy.rect.y
         for _ in range(500):

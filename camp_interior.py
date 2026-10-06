@@ -5,6 +5,7 @@ import pygame
 from campaign import World, ENVIRONMENTS
 from camp import Camp, npc_sprite, inhabitant_sprite
 from entities.hero import CLASSES
+from zerie_runtime import draw_camp_actor
 
 WIDTH = 1120
 POINTS = [('exit', 90, 'Courtyard exit'), ('counter', 350, 'Quartermaster counter'),
@@ -181,9 +182,9 @@ class QuartermasterStorehouse(World):
             glow = pygame.Surface((190,270),pygame.SRCALPHA)
             pygame.draw.ellipse(glow,(235,156,68,16),(0,0,190,270))
             screen.blit(glow,(x-95-game.camera.x,280))
-        screen.blit(self.quartermaster,(326-game.camera.x,418))
+        draw_camp_actor(screen, self.quartermaster, 350-game.camera.x, 480, self.ticks)
         for i,(x,y) in enumerate(self.ambient_positions()):
-            screen.blit(self.workers[i],(x-game.camera.x,y))
+            draw_camp_actor(screen, self.workers[i], x-game.camera.x, 550, self.ticks+i*13, True, i == 0)
             pygame.draw.rect(screen,(122,87,51),(x-6-game.camera.x,y+19,36,24))
             pygame.draw.line(screen,(57,42,31),(x-6-game.camera.x,y+19),(x+29-game.camera.x,y+42),3)
         for kind,x,label in POINTS:
@@ -205,7 +206,7 @@ class QuartermasterStorehouse(World):
         self.panel(screen,fonts,['QUARTERMASTER STOREHOUSE', 'E: inspect / exit   Esc: close panel / pause'],(170,12,460,58))
         target = self.nearby(game.knight)
         if target and not self.dialogue:
-            self.panel(screen,fonts,[target[2] + '  [E]'],(155,390,490,36))
+            self.panel(screen,fonts,[target[2] + '  [E]'],(155,310,490,36))
         if self.dialogue:
             lines = [self.dialogue['title']] + self.dialogue['lines'] + ['E / Enter / Esc: close']
             self.panel(screen,fonts,lines,(30,150,740,28*len(lines)+18))

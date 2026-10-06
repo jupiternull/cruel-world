@@ -158,16 +158,14 @@ def validated_frames(directory, w, h, scale, animations):
 
 
 def load_campaign_assets():
-    from pathlib import Path
-    missing = any(not (Path(ASSETS_DIR)/KNIGHT_ROOT/folder/f"HeroKnight_{({'BlockIdle': 'Block Idle', 'WallSlide': 'Slide', 'LedgeGrab': 'Grab Ledge'}).get(folder, folder)}_{i}.png").exists()
-                  for folder,count in KNIGHT_ANIMATIONS.values() for i in range(count))
-    if missing:
-        from build_presentation import knight_assets
-        knight_assets()
-    heroes = {name: validated_frames(*spec) for name, spec in HERO_MANIFEST.items()}
+    from zerie_runtime import PLAYER_ACTORS, PLAYER_ACTIONS, ENEMY_ACTIONS, REALM_ROSTERS, load_actor
+    heroes = {name: load_actor(actor, PLAYER_ACTIONS, HERO_MANIFEST[name][-1])
+              for name, actor in PLAYER_ACTORS.items()}
     monsters = {name: validated_frames('enemies/luizmelo/Monsters_Creatures_Fantasy/' + name,
                                       150, 150, 2, animations) for name, animations in MONSTER_MANIFEST.items()}
-    return {'heroes': heroes, 'monsters': monsters,
+    faction_enemies = {actor: load_actor(actor, ENEMY_ACTIONS, MONSTER_MANIFEST[species])
+                       for roster in REALM_ROSTERS.values() for actor, species in roster['enemies']}
+    return {'heroes': heroes, 'monsters': monsters, 'faction_enemies': faction_enemies,
             'forest_bg': image_asset(FOREST_ROOT + '/Background/Background.png'),
             'forest_trees': image_asset(FOREST_ROOT + '/Trees/Dark-Tree.png').subsurface((0, 0, 112, 384)).copy(),
             'forest_tiles': image_asset(FOREST_ROOT + '/Assets/Tiles.png'),

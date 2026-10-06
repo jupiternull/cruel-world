@@ -48,8 +48,8 @@ class Game:
         self.service = None
         self.campaign = Campaign()
         self.class_id = class_id or self.save.last_class
-        if self.class_id == 'huntress':
-            self.class_id = 'ranger'
+        from zerie_runtime import canonical_class
+        self.class_id = canonical_class(self.class_id)
         self.save.last_class = self.class_id
         self.save.save()
         self.knight = Hero(96, 496, self.assets['heroes'][self.class_id], self.class_id)
@@ -463,11 +463,16 @@ class Game:
     def spawn(self, boss=False):
         data = self.campaign.environment
         center = data['zones'][self.state.wave - 1]
-        species = data['boss'] if boss else data['enemies'][(self.state.spawned - 1) % len(data['enemies'])]
+        if boss:
+            species = data['boss']
+            frames = self.assets['monsters'][species]
+        else:
+            actor, species = data['enemy_roster'][(self.state.spawned - 1) % len(data['enemy_roster'])]
+            frames = self.assets['faction_enemies'][actor]
         x = center + (240 if self.knight.rect.centerx < center else -240)
         x = max(32, min(self.world.width - 100, x))
         y = 320 if species == 'Flying eye' else 476 if boss else 504
-        self.enemies.append(Monster(x, y, self.assets['monsters'][species], species, boss, self.campaign.index))
+        self.enemies.append(Monster(x, y, frames, species, boss, self.campaign.index))
         self.enemies[-1].reward_key = (self.state.wave, self.state.spawned)
         self.audio.play('boss' if boss else 'wave')
 
@@ -722,7 +727,7 @@ class Game:
 
 async def async_main():
     parser = argparse.ArgumentParser(description='Cruel World side-scrolling campaign')
-    parser.add_argument('--class', dest='class_id', choices=list(CLASSES) + ['huntress'], help='Start a campaign directly with this class')
+    parser.add_argument('--class', dest='class_id', choices=['knight', 'archer', 'wizard', 'warrior', 'ranger', 'huntress'], help='Start a campaign directly with this class')
     parser.add_argument('--environment', type=int, choices=(1, 2, 3), default=1, help='Debug starting region')
     parser.add_argument('--storehouse', action='store_true', help='Start inside the Quartermaster storehouse with --class')
     parser.add_argument('--camp', action='store_true', help='Start directly in camp with --class')

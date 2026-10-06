@@ -9,7 +9,7 @@ CLASSES = {
                 'secondary': 'Shield rush', 'cooldown': 180, 'color': (227, 166, 86),
                 'description': '150 HP / heavy melee / three-hit combo',
                 'hint': 'F: combo   E: shield rush   Shift/Q: dodge'},
-    'ranger': {'name': 'Ranger', 'health': 100, 'speed': 6, 'damage': 18,
+    'ranger': {'name': 'Archer', 'health': 100, 'speed': 6, 'damage': 18,
                  'secondary': 'Piercing volley', 'cooldown': 210, 'color': (129, 212, 142),
                  'description': '100 HP / fast bow / piercing spread',
                  'hint': 'F: arrow   E: piercing volley   Shift/Q: evade'},
@@ -30,17 +30,14 @@ def held(keys, key):
 class Hero(Entity):
     def __init__(self, x, y, frames, class_id='warrior'):
         super().__init__(x, y)
-        class_id = 'ranger' if class_id == 'huntress' else class_id
+        from zerie_runtime import canonical_class
+        class_id = canonical_class(class_id)
         self.class_id = class_id
         self.stats = CLASSES[class_id]
         self.rect = pygame.Rect(x, y, 32, 64)
         self.frames = frames
         self.states = frames
-        self.anchor = frames['Idle'][0].get_bounding_rect()
-        if class_id == 'warrior':
-            self.anchor = pygame.Rect(80, 28, 32, 78)
-        elif class_id == 'ranger':
-            self.anchor = pygame.Rect(132, 105, 33, 78)
+        self.anchor = getattr(frames, 'anchor', frames['Idle'][0].get_bounding_rect())
         self.health = self.max_health = self.stats['health']
         self.state = 'Idle'
         self.current_frames = frames['Idle']

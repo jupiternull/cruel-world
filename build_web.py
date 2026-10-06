@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-MODULES = ('main.py', 'config.py', 'assets.py', 'audio.py', 'camera.py', 'campaign.py',
+MODULES = ('zerie_runtime.py', 'main.py', 'config.py', 'assets.py', 'audio.py', 'camera.py', 'campaign.py',
            'progression.py', 'camp.py', 'camp_interior.py', 'region_features.py', 'game_state.py', 'level.py', 'persistence.py', 'projectile.py', 'scenery.py', 'ui.py')
 
 
@@ -16,8 +16,8 @@ def runtime_files(root=ROOT):
     from assets import HERO_MANIFEST, MONSTER_MANIFEST, FOREST_ROOT, MOON_ROOT
     files = {root / name for name in MODULES}
     files.update((root / 'entities').glob('*.py'))
-    for directory, *_ in HERO_MANIFEST.values():
-        files.update((root / 'assets' / directory).rglob('*.png'))
+    from zerie_runtime import runtime_sources
+    files.update(root / path.relative_to(ROOT) for path in runtime_sources(HERO_MANIFEST, MONSTER_MANIFEST))
     for species in MONSTER_MANIFEST:
         files.update((root / 'assets/enemies/luizmelo/Monsters_Creatures_Fantasy' / species).glob('*.png'))
     for name in ('Background/Background.png', 'Trees/Dark-Tree.png', 'Assets/Tiles.png',
