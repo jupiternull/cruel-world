@@ -4,9 +4,9 @@
 
 ![Cruel World title screen](docs/media/title.png)
 
-**[Play the published browser alpha](https://jupiternull.github.io/cruel-world/)** — older campaign build; desktop keyboard required. The current source release includes the newer camp, progression, provisions, and expanded regions.
+**[Play the current browser alpha](https://jupiternull.github.io/cruel-world/)** — desktop keyboard required. Includes the castle refuge, progression, provisions, aftermath, and expanded regions.
 
-> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The repository source now includes camp, expedition gates, expanded regions, persistent Blacksmith fittings, provisions, aftermath, and expedition records. The published GitHub Pages build has not yet been redeployed with those systems. A restricted itch.io playtest page and character creation remain deferred.
+> **Alpha status:** Combat, balance, performance, and presentation are still evolving. The repository and GitHub Pages build include camp, expedition gates, expanded regions, persistent Blacksmith fittings, provisions, aftermath, and expedition records. A restricted itch.io playtest page and character creation remain deferred.
 
 ## Current source build features
 
@@ -52,9 +52,9 @@ Choose **Begin campaign**, select a hero, and press Enter to enter camp. Follow 
 
 ## Browser build
 
-Published browser alpha (older campaign build): **https://jupiternull.github.io/cruel-world/**
+Live browser alpha: **https://jupiternull.github.io/cruel-world/**
 
-The commands below package the current source build with camp and progression. That archive has not been deployed to the public link.
+The commands below rebuild the currently deployed camp-and-progression browser package.
 
 Install FFmpeg with libvorbis support, then:
 
