@@ -207,7 +207,7 @@ class ProgressionTests(unittest.TestCase):
                 game.reset_game(c)
                 game.save.cleared_regions = []
                 self.assertFalse(game.save.purchase(c, 2))
-                game.save.cleared_regions = [0, 1, 2]
+                game.save.cleared_regions = [0, 1, 2, 3]
                 for i, (_, name, value, _) in enumerate(UPGRADES[c]):
                     self.assertTrue(game.save.purchase(c, i))
                     apply_loadout(game.knight, game.save)
@@ -216,9 +216,9 @@ class ProgressionTests(unittest.TestCase):
                     if name == 'healing':
                         game.knight.health = 10
                         game.knight.heal(20, upgrade=True)
-                        self.assertEqual(game.knight.health, 35)
+                        self.assertEqual(game.knight.health, 30 + value)
                         game.knight.heal(20)
-                        self.assertEqual(game.knight.health, 55)
+                        self.assertEqual(game.knight.health, 50 + value)
                     elif name == 'mobility':
                         game.knight.pending_attack = None
                         game.knight.mobility_timer = 0

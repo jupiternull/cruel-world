@@ -62,10 +62,13 @@ class GameState:
 class CampaignState(GameState):
     @property
     def boss_wave(self):
-        return self.wave == 3
+        return self.wave == getattr(self, 'realm_waves', 3)
 
     @property
     def wave_size(self):
+        if getattr(self, 'realm_waves', 3) == 8:
+            from underworld import ENCOUNTERS
+            return len(ENCOUNTERS[self.wave - 1])
         return 1 if self.boss_wave else 4 + self.wave
 
     @property

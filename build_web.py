@@ -8,16 +8,27 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
-MODULES = ('zerie_runtime.py', 'main.py', 'config.py', 'assets.py', 'audio.py', 'camera.py', 'campaign.py',
+MODULES = ('underworld_transitions.py', 'underworld.py', 'underworld_features.py', 'zerie_runtime.py', 'main.py', 'config.py', 'assets.py', 'audio.py', 'camera.py', 'campaign.py',
            'progression.py', 'camp.py', 'camp_interior.py', 'region_features.py', 'game_state.py', 'level.py', 'persistence.py', 'projectile.py', 'scenery.py', 'ui.py')
 
 
 def runtime_files(root=ROOT):
     from assets import HERO_MANIFEST, MONSTER_MANIFEST, FOREST_ROOT, MOON_ROOT
     files = {root / name for name in MODULES}
+    from campaign import ENVIRONMENTS
+    # Required authored scores must fail staging loudly if a build omits them.
+    for environment in ENVIRONMENTS:
+        if 'boss_music' in environment:
+            for key in ('music', 'boss_music'):
+                path = root / 'assets/audio/tommusic/music' / (environment[key] + '.ogg')
+                if not path.is_file():
+                    raise FileNotFoundError(path)
+                files.add(path)
     files.update((root / 'entities').glob('*.py'))
     from zerie_runtime import runtime_sources
     files.update(root / path.relative_to(ROOT) for path in runtime_sources(HERO_MANIFEST, MONSTER_MANIFEST))
+    from underworld import runtime_sources as infernal_sources
+    files.update(root / path.relative_to(ROOT) for path in infernal_sources())
     for species in MONSTER_MANIFEST:
         files.update((root / 'assets/enemies/luizmelo/Monsters_Creatures_Fantasy' / species).glob('*.png'))
     for name in ('Background/Background.png', 'Trees/Dark-Tree.png', 'Assets/Tiles.png',

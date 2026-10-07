@@ -162,7 +162,7 @@ def draw_class_selection(screen, fonts, heroes, selected):
     atmosphere(screen)
     text(screen,fonts['tiny'],'C R U E L   W O R L D',(400,27),GOLD)
     text(screen,fonts['large'],'Choose your oath',(400,66))
-    text(screen,fonts['small'],'Three realms await. Carry steel, bow, or flame into the dark.',(400,108))
+    text(screen,fonts['small'],'Four realms await. Carry steel, bow, or flame into the dark.',(400,108))
     for index,(name,stats) in enumerate(CLASSES.items()):
         rect=pygame.Rect(25+index*253,140,244,365)
         active=index==selected
@@ -203,7 +203,7 @@ def draw_ui(screen, fonts, knight, game_state):
     panel(screen,(8,8,254,112))
     screen.blit(fonts['small'].render(f"{knight.stats['name']}  {knight.health}/{knight.max_health}",True,IVORY),(20,15))
     bar(screen,(20,40,229,13),knight.health/knight.max_health,(151,44,49))
-    screen.blit(fonts['tiny'].render(f'Score {game_state.score}   Wave {game_state.wave}/3',True,GOLD),(20,58))
+    screen.blit(fonts['tiny'].render(f'Score {game_state.score}   Wave {game_state.wave}/{getattr(game_state, 'realm_waves', 3)}',True,GOLD),(20,58))
     for y,label,timer,total in ((79,knight.stats['secondary'],knight.secondary_cooldown,knight.stats['cooldown']),
                                (98,'Blink' if knight.class_id=='wizard' else 'Evade' if knight.class_id=='ranger' else 'Dodge',knight.dash_cooldown,150 if knight.class_id=='wizard' else 90)):
         screen.blit(fonts['tiny'].render(label+': '+('READY' if not timer else f'{timer/60:.1f}s'),True,IVORY),(20,y-3))

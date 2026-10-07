@@ -1,6 +1,6 @@
 # Cruel World — closed alpha
 
-A keyboard-only, three-hero campaign across three realms. This alpha is for playtesting; balance, performance, and presentation may change.
+A keyboard-only, three-hero campaign across four realms. This alpha is for playtesting; balance, performance, and presentation may change.
 
 Live browser build: https://jupiternull.github.io/cruel-world/
 

@@ -2,7 +2,7 @@
 
 **[Play the browser alpha](https://jupiternull.github.io/cruel-world/)**
 
-Desktop keyboard required. The game is in active development; mechanics, balance, art, and content may change.
+Desktop keyboard required; touch controls are not supported. Browser alpha loading may take a moment, audio requires interaction, and browser saves are session-local. Mechanics, balance, art, and content may change.
 
 ![Cruel World title screen](docs/media/title.png)
 
@@ -10,7 +10,9 @@ Desktop keyboard required. The game is in active development; mechanics, balance
 
 Cruel World is a side-scrolling pixel-art dark-fantasy action RPG centered on dangerous exploration, deliberate combat, and mastering powerful enemies.
 
-The current alpha is a compact playable pilot. Choose between the Knight, Archer, and Wizard, prepare at a castle refuge, and fight through three hostile realms with distinct enemies and bosses.
+The current alpha is a compact playable pilot. Choose between the Knight, Archer, and Wizard, prepare at a castle refuge, and fight through four hostile realms with distinct enemies and bosses: the Verdant Ruins, Sunken Keep, Moon Graveyard, and Cinder Dominion.
+
+The Cinder Dominion is the Underworld capstone: eight isolated subareas connected by interactive tunnels, gates, breaches, and ladder-accessed passages. Cool three seals while confronting the full 20-character infernal roster—demons, demonesses, black knights, hellhound, hellbat, blood monsters, Warlock, Ghostfire, lava slime, eyeball monster, Flame Golem, and the Minotaur miniboss—before facing the Pyre Regent. Authored exploration and boss music give this realm its own soundtrack.
 
 The finished game is planned as a vast, procedurally generated open world built from interconnected faction-shaped regions. Players will explore, pursue quests, uncover hidden history, gather materials from defeated creatures, develop their character and equipment, and return to an evolving base camp between expeditions.
 
@@ -23,6 +25,10 @@ The finished game is planned as a vast, procedurally generated open world built 
 | ![Class selection](docs/media/class-selection.png) | ![Verdant Ruins](docs/media/verdant-ruins.png) |
 | Sunken Keep | Moon Graveyard |
 | ![Sunken Keep](docs/media/sunken-keep.png) | ![Moon Graveyard](docs/media/moon-graveyard.png) |
+| Cinder Dominion / Underworld | Pyre Regent |
+| ![Cinder Dominion](docs/media/cinder-dominion.png) | ![Pyre Regent](docs/media/pyre-regent.png) |
+| Victory | |
+| ![Victory](docs/media/victory.png) | |
 
 ## Roadmap
 

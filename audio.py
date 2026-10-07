@@ -19,6 +19,7 @@ class AudioManager:
         self.mode = 'play'
         self.camp_morale = False
         self.environment_data = None
+        self.boss_music_active = False
         self.fade = None
         self.loop_names = (None, None)
         self.loop_gain = 1.0
@@ -153,9 +154,20 @@ class AudioManager:
 
     def environment(self, data):
         self.environment_data = data
+        self.boss_music_active = False
         self.current_environment = data['id']
         if self.mode == 'play':
             self.request_loops((data['music'], data['ambience']))
+
+    def boss_music(self, active=True):
+        self.boss_music_active = active
+        if self.mode == 'play' and self.environment_data:
+            self.request_loops(self.environment_loops())
+
+    def environment_loops(self):
+        data = self.environment_data
+        music = data.get('boss_music', data['music']) if self.boss_music_active else data['music']
+        return music, data['ambience']
 
     def set_mode(self, mode, refresh=False):
         if mode == self.mode and not refresh:
@@ -169,7 +181,7 @@ class AudioManager:
             self.current_environment = mode
             names = ('camp_music', 'camp_interior' if mode == 'interior' else 'camp_ambience')
         elif mode == 'play' and self.environment_data:
-            names = (self.environment_data['music'], self.environment_data['ambience'])
+            names = self.environment_loops()
         elif mode == 'results':
             names = ('camp_music', 'camp_interior')
         else:

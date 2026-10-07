@@ -28,10 +28,10 @@ class SaveData:
                     self.last_class = canonical_class(data['last_class'])
                 furthest = data.get('furthest_environment', 0) if data.get('version') in (2, 3, 4) else 0
                 if type(furthest) is int:
-                    self.furthest_environment = max(0, min(2, furthest))
+                    self.furthest_environment = max(0, min(3, furthest))
                 cleared = data.get('cleared_regions', []) if data.get('version') in (3, 4) else list(range(self.furthest_environment))
                 if isinstance(cleared, list):
-                    self.cleared_regions = sorted({i for i in cleared if type(i) is int and 0 <= i < 3})
+                    self.cleared_regions = sorted({i for i in cleared if type(i) is int and 0 <= i < 4})
                 from progression import PROVISIONS
                 if data.get('provision') in PROVISIONS:
                     self.provision = data['provision']
@@ -46,7 +46,7 @@ class SaveData:
                 records = data.get('records', {})
                 if isinstance(records, dict):
                     for key, value in records.items():
-                        if key in ('0', '1', '2') and isinstance(value, dict):
+                        if key in ('0', '1', '2', '3') and isinstance(value, dict):
                             row = {'discoveries': sorted({v for v in value.get('discoveries', []) if isinstance(v, str) and len(v) < 80}) if isinstance(value.get('discoveries'), list) else []}
                             for field in ('best', 'completions', 'provisions'):
                                 source = value.get(field, {})
@@ -100,7 +100,7 @@ class SaveData:
 
     def clear_region(self, index):
         self.cleared_regions = sorted(set(self.cleared_regions + [index]))
-        self.furthest_environment = max(self.furthest_environment, min(2, index + 1))
+        self.furthest_environment = max(self.furthest_environment, min(3, index + 1))
         self.save()
 
     @property
@@ -121,7 +121,7 @@ class SaveData:
         self.records = deepcopy(self.records)
         first = index not in self.cleared_regions
         self.cleared_regions = sorted(set(self.cleared_regions + [index]))
-        self.furthest_environment = max(self.furthest_environment, min(2, index + 1))
+        self.furthest_environment = max(self.furthest_environment, min(3, index + 1))
         row = self.records.setdefault(str(index), {'discoveries': [], 'best': {}, 'completions': {}, 'provisions': {}})
         row['discoveries'] = sorted(set(row['discoveries']) | set(discoveries))
         row['best'][class_id] = max(row['best'].get(class_id, 0), score)

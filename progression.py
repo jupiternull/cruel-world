@@ -1,9 +1,9 @@
 """Bounded loadouts and completed-expedition records; no gameplay randomness."""
 import random
 
-DISCOVERIES = (('cache', 'sanctuary'), ('ledger', 'armory'), ('brazier0', 'brazier1', 'brazier2', 'record', 'monument'))
+DISCOVERIES = (('cache', 'sanctuary'), ('ledger', 'armory'), ('brazier0', 'brazier1', 'brazier2', 'record', 'monument'), ('seal0', 'seal1', 'seal2', 'testament'))
 
-MATERIALS = ('Sovereign Mycelium', 'Marauder Iron', 'Lunar Remnant')
+MATERIALS = ('Sovereign Mycelium', 'Marauder Iron', 'Lunar Remnant', 'Pyre Crown')
 PROVISIONS = ('Field Dressing', 'Warding Salt', 'Hunters Charm')
 UPGRADES = {
     'warrior': [('Living lining', 'healing', 5, 'Healing pickups restore 5 extra HP.'),
@@ -16,6 +16,9 @@ UPGRADES = {
                ('Iron sigil', 'recovery', 30, 'Arcane wave recovers 30 ticks sooner.'),
                ('Moonward clasp', 'mobility', 20, 'Blink recovers 20 ticks sooner.')],
 }
+for upgrades in UPGRADES.values():
+    upgrades.append(('Cinder ward', 'healing', 8, 'Healing pickups restore 8 extra HP.'))
+
 SAYINGS = (
     'Death keeps no ledger. The Chronicler insists on one.',
     'Darkness charges no toll, but takes its due.',
@@ -102,10 +105,10 @@ def reaction(index, save, class_id):
     after = ('New supplies are stacked by the door.', 'Your trophy bought us time at the forge.',
              'Another route stands ready.', 'The beds are quieter tonight.', 'The air feels less burdened.',
              'Now practice what kept you alive.', 'I have ink enough for your return.')
-    final = ('Three roads, and still mouths to feed.', 'Peace is no excuse for a dull edge.',
+    final = ('Four roads, and still mouths to feed.', 'Peace is no excuse for a dull edge.',
              'The roads remain open for another watch.', 'Keep the bandages. Quiet is rarely permanent.',
-             'The lamps burn steadier now.', 'Victory still needs practice.', 'Three names crossed out. Yours remains in the living column.')
-    line = (final if len(save.cleared_regions) == 3 else after if save.cleared_regions else before)[index]
+             'The lamps burn steadier now.', 'Victory still needs practice.', 'Four names crossed out. Yours remains in the living column.')
+    line = (final if len(save.cleared_regions) == 4 else after if save.cleared_regions else before)[index]
     guidance = {'warrior': 'Keep the combo deliberate.', 'ranger': 'Leave room to evade.', 'wizard': 'Save a blink for danger.'}
     discoveries = sum(len(r.get('discoveries', [])) for r in save.records.values())
     return [line, guidance[class_id]] + ([f'{discoveries} landmarks entered in the ledger.'] if index in (2, 6) and discoveries else [])

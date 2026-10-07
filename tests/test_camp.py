@@ -86,7 +86,7 @@ class CampTests(unittest.TestCase):
 
     def test_return_score_health_cleanup_and_completion(self):
         game=self.game
-        for index in range(3):
+        for index in range(4):
             self.assertTrue(game.launch_expedition(index))
             game.state.score=1234
             game.knight.health=10

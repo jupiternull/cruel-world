@@ -8,7 +8,14 @@ class Scenery:
         self.kind = world.data['id']
         self.forest_background = pygame.transform.scale_by(assets['forest_bg'], 2)
         self.tiles = {}
-        if self.kind == 'graveyard':
+        if self.kind == 'underworld':
+            from underworld import SCENES, scene_path
+            sheet = pygame.image.load(str(scene_path(*SCENES[1]))).convert()
+            self.top = self.crop(sheet, (0, 132, 16, 8), 2)
+            self.fill = self.crop(sheet, (16, 132, 16, 12), 2)
+            self.platform = self.top
+            self.prop = None
+        elif self.kind == 'graveyard':
             sheet = assets['moon_tiles']
             self.top = self.crop(sheet, (144, 32, 16, 16), 2)
             self.fill = self.crop(sheet, (32, 64, 16, 16), 2)
@@ -44,7 +51,7 @@ class Scenery:
                 self.cache.blit(self.wood, (zone.left, y))
                 self.cache.blit(self.wood, (zone.right - 8, y))
                 self.cache.blit(self.rung, (zone.left + 4, y + 7))
-        for index, x in enumerate(range(384, world.width - 200, 560)):
+        for index, x in enumerate(range(384, world.width - 200, 560) if self.prop is not None else []):
             prop = pygame.transform.flip(self.prop, bool(index % 2), False)
             prop = prop.copy()
             prop.set_alpha(150)
@@ -52,7 +59,7 @@ class Scenery:
         if self.kind == 'forest':
             for x in (880, 1808):
                 self.cache.blit(self.ruin, (x, 336))
-        for hazard in world.hazards:
+        for hazard in ([] if self.kind == 'underworld' else world.hazards):
             for x in range(hazard.x, hazard.right, 16):
                 if self.kind == 'forest':
                     self.cache.blit(self.crop(assets['forest_tiles'], (256, 256, 16, 16), 1), (x, hazard.y))
@@ -70,7 +77,9 @@ class Scenery:
 
     def draw(self, screen, camera, campaign):
         screen.fill(self.world.data['color'])
-        if self.kind == 'forest':
+        if self.kind == 'underworld':
+            pass
+        elif self.kind == 'forest':
             self.repeat(screen, self.forest_background, camera, 0.15)
             tree = self.assets['forest_trees']
             for index, x in enumerate(range(-224, self.world.width, 208)):

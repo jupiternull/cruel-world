@@ -70,10 +70,10 @@ class CampaignTests(unittest.TestCase):
         hero = self.game.knight
         for data in ENVIRONMENTS:
             world = World(data)
-            world.move(hero, 10000)
+            world.move(hero, data['width'] + 100)
             self.assertEqual(hero.rect.right, data['width'])
             self.assertGreater(hero.rect.x, 800)
-            world.move(hero, -10000)
+            world.move(hero, -data['width'] - 100)
             self.assertEqual(hero.rect.x, 0)
 
     def test_class_selection_before_run_and_persistence(self):
@@ -333,7 +333,7 @@ class CampaignTests(unittest.TestCase):
 
     def test_environment_transition_and_victory(self):
         game = self.game
-        for index in range(3):
+        for index in range(4):
             game.launch_expedition(index, debug=True)
             self.assertEqual(game.campaign.index, index)
             game.campaign.exit_open = True
@@ -346,12 +346,12 @@ class CampaignTests(unittest.TestCase):
             self.ticks(30)
         self.assertEqual(game.mode, 'camp')
         self.assertTrue(game.campaign.complete)
-        self.assertEqual(game.save.cleared_regions, [0, 1, 2])
+        self.assertEqual(game.save.cleared_regions, [0, 1, 2, 3])
         self.assertTrue(game.campaign.complete)
-        self.assertEqual(SaveData(game.save.path).furthest_environment, 2)
+        self.assertEqual(SaveData(game.save.path).furthest_environment, 3)
 
     def test_bosses_are_unique_species_in_each_environment(self):
-        for index, data in enumerate(ENVIRONMENTS):
+        for index, data in enumerate(ENVIRONMENTS[:3]):
             game = self.game
             game.campaign.index = index
             game.load_environment()

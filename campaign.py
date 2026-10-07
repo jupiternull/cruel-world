@@ -31,9 +31,35 @@ ENVIRONMENTS = [
 ]
 
 
+from underworld import ENCOUNTERS
+from underworld_transitions import TRANSITIONS, near_transition
+ENVIRONMENTS.append({
+    'id': 'underworld', 'name': 'THE CINDER DOMINION', 'width': 10240,
+    'color': (35, 12, 20), 'music': 'underworld_exploration',
+    'boss_music': 'pyre_regent', 'ambience': 'cave_ambience',
+    'enemies': ('Goblin', 'Flying eye', 'Skeleton'), 'boss': 'Goblin',
+    'boss_name': 'THE PYRE REGENT', 'faction': 'infernal',
+    'enemy_roster': tuple((a, 'Goblin') for wave in ENCOUNTERS for a in wave),
+    'platforms': [(x, 432 if i % 2 else 464, 224) for i, x in enumerate(range(400, 9700, 640))],
+    'climbs': [(x + 96, 432 if i % 2 else 464, 128 if i % 2 else 96) for i, x in enumerate(range(400, 9700, 640))],
+    'hazards': [(x, 544, 80, 16) for x in (920, 2200, 3480, 4760, 6040, 7320, 8600)],
+    'zones': (640, 1920, 3200, 4480, 5760, 7040, 8320, 9600),
+    'checkpoints': (96,) + tuple(t.x + 264 for t in TRANSITIONS),
+})
+
+
+_underworld = ENVIRONMENTS[-1]
+_underworld['platforms'] = [p for p in _underworld['platforms'] if not near_transition(p[0], p[2])] + [
+    (r.x, r.y, r.width) for t in TRANSITIONS for r in t.platforms]
+_underworld['climbs'] = [c for c in _underworld['climbs'] if not near_transition(c[0], 24)] + [
+    (r.x, r.y, r.height) for t in TRANSITIONS for r in t.ladders]
+_underworld['hazards'] = [h for h in _underworld['hazards'] if not near_transition(h[0], h[2])]
+
 from zerie_runtime import REALM_ROSTERS
 
 for environment in ENVIRONMENTS:
+    if environment['id'] == 'underworld':
+        continue
     roster = REALM_ROSTERS[environment['id']]
     environment['faction'] = roster['faction']
     environment['enemy_roster'] = roster['enemies']

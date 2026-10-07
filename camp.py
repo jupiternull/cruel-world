@@ -21,7 +21,7 @@ LINES = [
 
 
 WIDTH = 2200
-GATES = (900, 1040, 1180)
+GATES = (850, 970, 1090, 1210)
 # Footprints are scenery behind the continuous, unobstructed walking lane.
 STATIONS = [
     ('storehouse', (40, 330, 240, 230)),
@@ -86,14 +86,14 @@ def courtyard():
     pygame.draw.line(s,(181,155,97),(338,137),(354,129),4)
     rect((184,172,132),(310,218,30,25)); pygame.draw.lines(s,(81,113,98),False,[(312,237),(320,225),(330,235),(337,220)],2)
     rect((111,86,54),(340,258,35,4)); rect((204,188,143),(344,254,27,4))
-    # Keep district: three separate full-height stone arches.
+    # Keep district: four separate full-height stone arches.
     rect((62,63,68),(406,146,230,134))
     for x in (399,628):
         rect((75,76,79),(x,119,18,161))
         for a in range(x,x+18,6): rect((87,86,84),(a,112,4,12))
     for x in range(417,628,12): rect((77,77,79),(x,137,8,12))
     for i,g in enumerate(GATES):
-        x=g//2; accent=((78,119,91),(100,88,121),(91,106,139))[i]
+        x=g//2; accent=((78,119,91),(100,88,121),(91,106,139),(184,91,54))[i]
         pygame.draw.ellipse(s,(111,108,97),(x-28,181,56,75)); rect((111,108,97),(x-28,219,56,61))
         pygame.draw.ellipse(s,(18,24,30),(x-21,188,42,65)); rect((18,24,30),(x-21,220,42,60))
         for a in range(x-18,x+20,9): rect((65,60,53),(a,218,3,62))
@@ -302,7 +302,7 @@ class Camp(World):
         elif index == 5:
             detail = [stats['hint'].replace('E:', 'R:'), 'A/D or arrows: move | Space: jump | W/S: climb', f'Straw dummy in the training yard: {self.hits} hits. F/R to test.']
         else:
-            detail = [f'Best score: {game.save.high_score}', 'Furthest known expedition: ' + ENVIRONMENTS[game.save.furthest_environment]['name'], f'Regions cleared: {len(game.save.cleared_regions)}/3']
+            detail = [f'Best score: {game.save.high_score}', 'Furthest known expedition: ' + ENVIRONMENTS[game.save.furthest_environment]['name'], f'Regions cleared: {len(game.save.cleared_regions)}/4']
         from progression import reaction
         self.dialogue = {'title':ROLES[index], 'lines':detail + reaction(index, game.save, game.class_id) + LINES[index]}
 
@@ -363,7 +363,7 @@ class Camp(World):
             x = (610 + i * 82) - camera.x
             pygame.draw.rect(screen, (100, 96, 82), (x-22, 320, 44, 12))
             pygame.draw.rect(screen, (62, 65, 64), (x-14, 332, 28, 52))
-            color = ((134, 166, 105), (160, 157, 145), (165, 150, 207))[i]
+            color = ((134, 166, 105), (160, 157, 145), (165, 150, 207), (239, 139, 69))[i]
             if i == 0:
                 pygame.draw.rect(screen, color, (x-4, 305, 8, 14))
                 pygame.draw.ellipse(screen, color, (x-20, 291, 40, 18))
@@ -380,7 +380,7 @@ class Camp(World):
                     pygame.draw.rect(screen, (81, 78, 70), (left+column*12, 350+row*8, 10, 6))
             pygame.draw.rect(screen, (111, 80, 48), (220+i*28-camera.x, 520, 24, 28))
             pygame.draw.line(screen, (57, 43, 32), (220+i*28-camera.x, 521), (242+i*28-camera.x, 546), 2)
-        if len(game.save.cleared_regions) == 3:
+        if len(game.save.cleared_regions) == 4:
             glow = pygame.Surface((800, 600), pygame.SRCALPHA)
             glow.fill((173, 137, 77, 9))
             screen.blit(glow, (0, 0))
