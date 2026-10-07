@@ -14,6 +14,16 @@ The current alpha is a compact playable pilot. Choose between the Knight, Archer
 
 The finished game is planned as a vast, procedurally generated open world built from interconnected faction-shaped regions. Players will explore, pursue quests, uncover hidden history, gather materials from defeated creatures, develop their character and equipment, and return to an evolving base camp between expeditions.
 
+## Preview
+
+![Cruel World gameplay](docs/media/gameplay.gif)
+
+| Class selection | Verdant Ruins |
+| --- | --- |
+| ![Class selection](docs/media/class-selection.png) | ![Verdant Ruins](docs/media/verdant-ruins.png) |
+| Sunken Keep | Moon Graveyard |
+| ![Sunken Keep](docs/media/sunken-keep.png) | ![Moon Graveyard](docs/media/moon-graveyard.png) |
+
 ## Roadmap
 
 - Refine combat, movement, balance, performance, and browser play.
